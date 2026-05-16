@@ -6,8 +6,13 @@ By default:
 - Only the mall sheet ("VM-tipset 2026 mall")
 - Only worksheets that are visible (not hidden / veryHidden)
 - Only cells in visible rows and columns (skip hidden row/col)
+- Only the functional region for the web app: columns A–T, rows ≤169, plus B172:B174
+  and C174:F174 (row 174 dropdown inputs)
 
-Output: sheet meta, merged ranges (visible corner), non-empty cells (values + formulas).
+Output: sheet meta, merged cells in region, cell values and formulas, Excel data validation
+(list dropdowns and resolved option values, including sources outside the clipped columns).
+
+Empty cells that have validation (e.g. B174–F174) are included so inputs are not dropped.
 
 Usage:
   python -m venv .venv && source .venv/bin/activate
@@ -26,6 +31,63 @@ from typing import Any
 
 # Default sheet for VM-tipset mall templates (others are usually workbook-hidden).
 DEFAULT_SHEET_NAME = "VM-tipset 2026 mall"
+
+# Web-app functional region (columns A–T, rows 1–169) plus listed exceptions.
+DEFAULT_REGION_MAX_COLUMN_LETTER = "T"
+DEFAULT_REGION_MAX_ROW = 169
+DEFAULT_REGION_EXTRA_RANGES: tuple[str, ...] = ("B172:B174", "C174:F174")
+
+
+def _col_letters_to_index(letters: str) -> int:
+    n = 0
+    for ch in letters.upper():
+        n = n * 26 + (ord(ch) - ord("A") + 1)
+    return n
+
+
+def _range_to_box(spec: str) -> tuple[int, int, int, int]:
+    from openpyxl.utils import range_boundaries
+
+    min_col, min_row, max_col, max_row = range_boundaries(spec)
+    return (min_col, min_row, max_col, max_row)
+
+
+def _boxes_intersect(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> bool:
+    ac0, ar0, ac1, ar1 = a
+    bc0, br0, bc1, br1 = b
+    return not (ac1 < bc0 or bc1 < ac0 or ar1 < br0 or br1 < ar0)
+
+
+def _cell_in_region(
+    row: int,
+    col: int,
+    *,
+    main_box: tuple[int, int, int, int],
+    extra_boxes: list[tuple[int, int, int, int]],
+) -> bool:
+    min_c, min_r, max_c, max_r = main_box
+    if min_r <= row <= max_r and min_c <= col <= max_c:
+        return True
+    for box in extra_boxes:
+        ec0, er0, ec1, er1 = box
+        if er0 <= row <= er1 and ec0 <= col <= ec1:
+            return True
+    return False
+
+
+def _merge_in_region(
+    merge_spec: str,
+    *,
+    main_box: tuple[int, int, int, int],
+    extra_boxes: list[tuple[int, int, int, int]],
+) -> bool:
+    box = _range_to_box(merge_spec)
+    if _boxes_intersect(box, main_box):
+        return True
+    for ex in extra_boxes:
+        if _boxes_intersect(box, ex):
+            return True
+    return False
 
 
 def _row_hidden(ws, row: int) -> bool:
@@ -51,6 +113,98 @@ def _merged_range_visible(ws, coord: str) -> bool:
 
     min_col, min_row, _, _ = range_boundaries(coord)
     return not _row_hidden(ws, min_row) and not _col_hidden(ws, min_col)
+
+
+def _a1(row: int, column: int) -> str:
+    from openpyxl.utils import get_column_letter
+
+    return f"{get_column_letter(column)}{row}"
+
+
+def _iter_rc_in_sqref(sqref: str | None):
+    if not sqref:
+        return
+    for part in str(sqref).split():
+        part = part.strip()
+        if not part:
+            continue
+        min_c, min_r, max_c, max_r = _range_to_box(part)
+        for r in range(min_r, max_r + 1):
+            for c in range(min_c, max_c + 1):
+                yield r, c
+
+
+def _visible_cell_coordinate(ws, row: int, col: int, *, include_hidden_rows_cols: bool) -> bool:
+    if include_hidden_rows_cols:
+        return True
+    return not _row_hidden(ws, row) and not _col_hidden(ws, col)
+
+
+def _cell_eligible_for_parse(
+    row: int,
+    col: int,
+    *,
+    region_clip: bool,
+    main_box: tuple[int, int, int, int],
+    extra_boxes: list[tuple[int, int, int, int]],
+    ws,
+    include_hidden_rows_cols: bool,
+) -> bool:
+    if not _visible_cell_coordinate(ws, row, col, include_hidden_rows_cols=include_hidden_rows_cols):
+        return False
+    if region_clip:
+        return _cell_in_region(row, col, main_box=main_box, extra_boxes=extra_boxes)
+    return True
+
+
+def _resolve_list_formula(ws, formula1: str, *, cache: dict[str, list[Any]]) -> list[Any]:
+    if formula1 in cache:
+        return cache[formula1]
+    raw = formula1.strip()
+    out: list[Any] = []
+
+    if raw.startswith('"') and raw.endswith('"') and len(raw) >= 2:
+        inner = raw[1:-1].replace('""', '"')
+        for piece in inner.split(","):
+            p = piece.strip()
+            if p != "":
+                out.append(p)
+        cache[formula1] = out
+        return out
+
+    try:
+        min_c, min_r, max_c, max_r = _range_to_box(raw)
+    except Exception:
+        cache[formula1] = []
+        return []
+
+    for r in range(min_r, max_r + 1):
+        for c in range(min_c, max_c + 1):
+            v = ws.cell(row=r, column=c).value
+            if v is not None and v != "":
+                out.append(v)
+    cache[formula1] = out
+    return out
+
+
+def _serialize_data_validation(ws, dv, *, list_cache: dict[str, list[Any]]) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "type": dv.type,
+        "operator": dv.operator,
+        "formula1": dv.formula1,
+        "formula2": dv.formula2,
+        "allow_blank": dv.allow_blank,
+        "show_dropdown": getattr(dv, "showDropDown", None),
+        "show_error_message": getattr(dv, "showErrorMessage", None),
+        "error_title": getattr(dv, "errorTitle", None),
+        "error": getattr(dv, "error", None),
+        "prompt_title": getattr(dv, "promptTitle", None),
+        "prompt": getattr(dv, "prompt", None),
+        "sqref": str(dv.sqref) if dv.sqref else None,
+    }
+    if dv.type == "list" and dv.formula1:
+        out["list_values"] = _resolve_list_formula(ws, dv.formula1, cache=list_cache)
+    return out
 
 
 def _cell_payload(cell) -> dict[str, Any]:
@@ -105,6 +259,10 @@ def parse_workbook(
     include_hidden_sheets: bool,
     include_hidden_rows_cols: bool,
     strict_sheet: bool,
+    region_clip: bool,
+    region_max_column_letter: str,
+    region_max_row: int,
+    region_extra_ranges: tuple[str, ...],
 ) -> dict[str, Any]:
     from openpyxl import load_workbook
 
@@ -144,23 +302,88 @@ def parse_workbook(
                 f"Sheets: {', '.join(st_rec)}"
             )
 
+        max_col_idx = _col_letters_to_index(region_max_column_letter)
+        main_box = (1, 1, max_col_idx, region_max_row)
+        extra_boxes = [_range_to_box(s) for s in region_extra_ranges]
+
         sheets: list[dict[str, Any]] = []
         for name in targets:
             ws = wb[name]
-            merged = [
-                str(rng)
-                for rng in ws.merged_cells.ranges
-                if include_hidden_rows_cols or _merged_range_visible(ws, str(rng))
-            ]
+            merged: list[str] = []
+            for rng in ws.merged_cells.ranges:
+                spec = str(rng)
+                if not include_hidden_rows_cols and not _merged_range_visible(ws, spec):
+                    continue
+                if region_clip and not _merge_in_region(spec, main_box=main_box, extra_boxes=extra_boxes):
+                    continue
+                merged.append(spec)
 
             cells: list[dict[str, Any]] = []
             for row in ws.iter_rows():
                 for cell in row:
                     if not include_hidden_rows_cols and not _cell_visible(ws, cell):
                         continue
+                    if region_clip and not _cell_in_region(
+                        cell.row, cell.column, main_box=main_box, extra_boxes=extra_boxes
+                    ):
+                        continue
                     payload = _cell_payload(cell)
                     if payload:
                         cells.append(payload)
+
+            list_cache: dict[str, list[Any]] = {}
+            by_addr: dict[str, dict[str, Any]] = {c["address"]: c for c in cells}
+
+            from openpyxl.utils import coordinate_to_tuple
+
+            data_validations: list[dict[str, Any]] = []
+            seen_dv: set[tuple[Any, ...]] = set()
+            for dv in ws.data_validations.dataValidation:
+                touches = False
+                for r, col in _iter_rc_in_sqref(dv.sqref):
+                    if _cell_eligible_for_parse(
+                        r,
+                        col,
+                        region_clip=region_clip,
+                        main_box=main_box,
+                        extra_boxes=extra_boxes,
+                        ws=ws,
+                        include_hidden_rows_cols=include_hidden_rows_cols,
+                    ):
+                        touches = True
+                        break
+                if not touches:
+                    continue
+
+                vdict = _serialize_data_validation(ws, dv, list_cache=list_cache)
+                dedupe_key = (vdict.get("sqref"), vdict.get("type"), vdict.get("formula1"))
+                if dedupe_key not in seen_dv:
+                    seen_dv.add(dedupe_key)
+                    data_validations.append(vdict)
+
+                for r, col in _iter_rc_in_sqref(dv.sqref):
+                    if not _cell_eligible_for_parse(
+                        r,
+                        col,
+                        region_clip=region_clip,
+                        main_box=main_box,
+                        extra_boxes=extra_boxes,
+                        ws=ws,
+                        include_hidden_rows_cols=include_hidden_rows_cols,
+                    ):
+                        continue
+                    addr = _a1(r, col)
+                    if addr not in by_addr:
+                        by_addr[addr] = {
+                            "address": addr,
+                            "kind": "empty",
+                            "value": None,
+                            "validation": vdict,
+                        }
+                    else:
+                        by_addr[addr]["validation"] = vdict
+
+            cells_out = sorted(by_addr.values(), key=lambda c: coordinate_to_tuple(c["address"]))
 
             sheets.append(
                 {
@@ -169,7 +392,8 @@ def parse_workbook(
                     "max_row": ws.max_row,
                     "max_column": ws.max_column,
                     "merged_ranges": merged,
-                    "cells": cells,
+                    "data_validations": data_validations,
+                    "cells": cells_out,
                 }
             )
 
@@ -181,6 +405,10 @@ def parse_workbook(
                 "all_visible_sheets": all_visible_sheets,
                 "include_hidden_sheets": include_hidden_sheets,
                 "include_hidden_rows_cols": include_hidden_rows_cols,
+                "region_clip": region_clip,
+                "region_max_column_letter": region_max_column_letter,
+                "region_max_row": region_max_row,
+                "region_extra_ranges": list(region_extra_ranges),
             },
             "sheet_count": len(sheets),
             "sheets": sheets,
@@ -223,6 +451,39 @@ def main() -> int:
         help="Include cells in hidden rows or columns (and merged ranges whose top-left is hidden).",
     )
     parser.add_argument(
+        "--no-region-clip",
+        action="store_false",
+        dest="region_clip",
+        help=(
+            "Keep the full parsed worksheet (within visibility/hidden-row settings). "
+            "Default: clip to columns A–T and rows ≤169, plus B172:B174."
+        ),
+    )
+    parser.add_argument(
+        "--region-max-column",
+        metavar="LETTER",
+        default=DEFAULT_REGION_MAX_COLUMN_LETTER,
+        help=f"Last column letter included when region clipping is on (default: {DEFAULT_REGION_MAX_COLUMN_LETTER!r}).",
+    )
+    parser.add_argument(
+        "--region-max-row",
+        type=int,
+        metavar="N",
+        default=DEFAULT_REGION_MAX_ROW,
+        help=f"Highest row included in the main block when clipping (default: {DEFAULT_REGION_MAX_ROW}).",
+    )
+    parser.add_argument(
+        "--region-extra-range",
+        action="append",
+        metavar="RANGE",
+        dest="region_extra_ranges",
+        help=(
+            "Additional A1-style range to include when clipping (repeatable). "
+            f"Default when omitting: {', '.join(DEFAULT_REGION_EXTRA_RANGES)}"
+        ),
+    )
+    parser.set_defaults(region_clip=True)
+    parser.add_argument(
         "--json",
         type=Path,
         metavar="FILE",
@@ -251,6 +512,12 @@ def main() -> int:
     else:
         sheet_name = args.sheet
 
+    extra = (
+        tuple(args.region_extra_ranges)
+        if args.region_extra_ranges
+        else DEFAULT_REGION_EXTRA_RANGES
+    )
+
     try:
         data = parse_workbook(
             wb_path,
@@ -260,6 +527,10 @@ def main() -> int:
             include_hidden_sheets=bool(args.include_hidden_sheets),
             include_hidden_rows_cols=bool(args.include_hidden_rows_cols),
             strict_sheet=sheet_name is not None,
+            region_clip=bool(args.region_clip),
+            region_max_column_letter=str(args.region_max_column).upper(),
+            region_max_row=int(args.region_max_row),
+            region_extra_ranges=extra,
         )
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
@@ -276,10 +547,18 @@ def main() -> int:
         for sh in data["sheets"]:
             formulas = sum(1 for c in sh["cells"] if c.get("kind") == "formula")
             values = len(sh["cells"]) - formulas
+            clip = data.get("parse", {})
+            clip_note = ""
+            if clip.get("region_clip"):
+                clip_note = (
+                    f" | clip A:{clip.get('region_max_column_letter')} "
+                    f"row≤{clip.get('region_max_row')} + {clip.get('region_extra_ranges')}"
+                )
             print(
                 f'{sh["name"]}: rows≤{sh["max_row"]} cols≤{sh["max_column"]} '
                 f"cells={len(sh['cells'])} (values≈{values}, formulas≈{formulas}) "
-                f'merged={len(sh["merged_ranges"])}'
+                f"merged={len(sh['merged_ranges'])} dv={len(sh.get('data_validations', []))}"
+                f"{clip_note}"
             )
     elif not args.json:
         # Default: pretty JSON to stdout (can be large).
