@@ -2,8 +2,12 @@
 """
 Extract structure from a .xlsx for rebuilding the UX in a web app.
 
-- Sheet names, used range, merged cells
-- Every non-empty cell: value vs formula, data types
+By default:
+- Only the mall sheet ("VM-tipset 2026 mall")
+- Only worksheets that are visible (not hidden / veryHidden)
+- Only cells in visible rows and columns (skip hidden row/col)
+
+Output: sheet meta, merged ranges (visible corner), non-empty cells (values + formulas).
 
 Usage:
   python -m venv .venv && source .venv/bin/activate
@@ -19,6 +23,34 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+
+# Default sheet for VM-tipset mall templates (others are usually workbook-hidden).
+DEFAULT_SHEET_NAME = "VM-tipset 2026 mall"
+
+
+def _row_hidden(ws, row: int) -> bool:
+    dim = ws.row_dimensions.get(row)
+    return bool(dim and dim.hidden)
+
+
+def _col_hidden(ws, col: int) -> bool:
+    from openpyxl.utils import get_column_letter
+
+    letter = get_column_letter(col)
+    dim = ws.column_dimensions.get(letter)
+    return bool(dim and dim.hidden)
+
+
+def _cell_visible(ws, cell) -> bool:
+    return not _row_hidden(ws, cell.row) and not _col_hidden(ws, cell.column)
+
+
+def _merged_range_visible(ws, coord: str) -> bool:
+    """Keep merge if its top-left cell lies in a visible row and column."""
+    from openpyxl.utils import range_boundaries
+
+    min_col, min_row, _, _ = range_boundaries(coord)
+    return not _row_hidden(ws, min_row) and not _col_hidden(ws, min_col)
 
 
 def _cell_payload(cell) -> dict[str, Any]:
@@ -64,41 +96,97 @@ def _cell_payload(cell) -> dict[str, Any]:
     return out
 
 
-def parse_workbook(path: Path, *, data_only: bool) -> dict[str, Any]:
+def parse_workbook(
+    path: Path,
+    *,
+    data_only: bool,
+    sheet_name: str | None,
+    all_visible_sheets: bool,
+    include_hidden_sheets: bool,
+    include_hidden_rows_cols: bool,
+    strict_sheet: bool,
+) -> dict[str, Any]:
     from openpyxl import load_workbook
 
     wb = load_workbook(path, data_only=data_only, read_only=False)
+    try:
+        all_names = list(wb.sheetnames)
 
-    sheets: list[dict[str, Any]] = []
-    for name in wb.sheetnames:
-        ws = wb[name]
-        merged = [str(rng) for rng in ws.merged_cells.ranges]
+        targets: list[str] = []
+        for name in all_names:
+            ws = wb[name]
+            state = getattr(ws, "sheet_state", None) or "visible"
 
-        cells: list[dict[str, Any]] = []
-        # iter_rows with values_only=False gives real Cell objects (formulas when data_only=False).
-        for row in ws.iter_rows():
-            for cell in row:
-                payload = _cell_payload(cell)
-                if payload:
-                    cells.append(payload)
+            if not include_hidden_sheets and state != "visible":
+                continue
 
-        sheets.append(
-            {
-                "name": name,
-                "max_row": ws.max_row,
-                "max_column": ws.max_column,
-                "merged_ranges": merged,
-                "cells": cells,
-            }
-        )
+            if all_visible_sheets:
+                targets.append(name)
+            elif sheet_name is not None:
+                if name == sheet_name:
+                    targets.append(name)
+            else:
+                targets.append(name)
 
-    wb.close()
-    return {
-        "workbook": path.name,
-        "data_only": data_only,
-        "sheet_count": len(sheets),
-        "sheets": sheets,
-    }
+        if strict_sheet and sheet_name is not None and sheet_name not in all_names:
+            known = ", ".join(repr(n) for n in all_names)
+            raise ValueError(f"no sheet named {sheet_name!r}; available: {known}")
+
+        if strict_sheet and sheet_name is not None and sheet_name not in targets:
+            st_rec: list[str] = []
+            for name in all_names:
+                wsi = wb[name]
+                st = getattr(wsi, "sheet_state", None) or "visible"
+                st_rec.append(f"{name!r} ({st})")
+            raise ValueError(
+                f"sheet {sheet_name!r} is not among selected sheets "
+                "(hidden worksheets are skipped by default; pass --include-hidden-sheets). "
+                f"Sheets: {', '.join(st_rec)}"
+            )
+
+        sheets: list[dict[str, Any]] = []
+        for name in targets:
+            ws = wb[name]
+            merged = [
+                str(rng)
+                for rng in ws.merged_cells.ranges
+                if include_hidden_rows_cols or _merged_range_visible(ws, str(rng))
+            ]
+
+            cells: list[dict[str, Any]] = []
+            for row in ws.iter_rows():
+                for cell in row:
+                    if not include_hidden_rows_cols and not _cell_visible(ws, cell):
+                        continue
+                    payload = _cell_payload(cell)
+                    if payload:
+                        cells.append(payload)
+
+            sheets.append(
+                {
+                    "name": name,
+                    "sheet_state": getattr(ws, "sheet_state", None) or "visible",
+                    "max_row": ws.max_row,
+                    "max_column": ws.max_column,
+                    "merged_ranges": merged,
+                    "cells": cells,
+                }
+            )
+
+        return {
+            "workbook": path.name,
+            "data_only": data_only,
+            "parse": {
+                "sheet_name_filter": sheet_name,
+                "all_visible_sheets": all_visible_sheets,
+                "include_hidden_sheets": include_hidden_sheets,
+                "include_hidden_rows_cols": include_hidden_rows_cols,
+            },
+            "sheet_count": len(sheets),
+            "sheets": sheets,
+        }
+    finally:
+        wb.close()
 
 
 def main() -> int:
@@ -109,6 +197,30 @@ def main() -> int:
         nargs="?",
         default=Path("VM-tipset-2026-Mall version 1.3.xlsx"),
         help="Path to .xlsx (default: VM-tipset-2026-Mall version 1.3.xlsx)",
+    )
+    parser.add_argument(
+        "--sheet",
+        metavar="NAME",
+        default=DEFAULT_SHEET_NAME,
+        help=(
+            f"Only parse this worksheet (default: {DEFAULT_SHEET_NAME!r}). "
+            "Ignored when --all-visible-sheets is set."
+        ),
+    )
+    parser.add_argument(
+        "--all-visible-sheets",
+        action="store_true",
+        help="Parse every visible sheet (ignore --sheet).",
+    )
+    parser.add_argument(
+        "--include-hidden-sheets",
+        action="store_true",
+        help="Allow hidden / veryHidden worksheets in addition to visible ones.",
+    )
+    parser.add_argument(
+        "--include-hidden-rows-cols",
+        action="store_true",
+        help="Include cells in hidden rows or columns (and merged ranges whose top-left is hidden).",
     )
     parser.add_argument(
         "--json",
@@ -133,7 +245,25 @@ def main() -> int:
         print(f"error: not a file: {wb_path}", file=sys.stderr)
         return 1
 
-    data = parse_workbook(wb_path, data_only=args.data_only)
+    sheet_name: str | None
+    if args.all_visible_sheets:
+        sheet_name = None
+    else:
+        sheet_name = args.sheet
+
+    try:
+        data = parse_workbook(
+            wb_path,
+            data_only=args.data_only,
+            sheet_name=sheet_name,
+            all_visible_sheets=bool(args.all_visible_sheets),
+            include_hidden_sheets=bool(args.include_hidden_sheets),
+            include_hidden_rows_cols=bool(args.include_hidden_rows_cols),
+            strict_sheet=sheet_name is not None,
+        )
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
 
     if args.json:
         args.json.write_text(
