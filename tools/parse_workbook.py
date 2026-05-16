@@ -12,6 +12,9 @@ By default:
 Output: sheet meta, merged cells in region, cell values and formulas, Excel data validation
 (list dropdowns and resolved option values, including sources outside the clipped columns).
 
+For formula cells, a second pass with data_only=True attaches cached_value when the workbook
+contains a last-calculated result (use --no-merge-cached-values to skip).
+
 Empty cells that have validation (e.g. B174–F174) are included so inputs are not dropped.
 
 Usage:
@@ -263,8 +266,13 @@ def parse_workbook(
     region_max_column_letter: str,
     region_max_row: int,
     region_extra_ranges: tuple[str, ...],
+    merge_cached_values: bool,
 ) -> dict[str, Any]:
     from openpyxl import load_workbook
+
+    wb_values = None
+    if merge_cached_values and not data_only:
+        wb_values = load_workbook(path, data_only=True, read_only=True)
 
     wb = load_workbook(path, data_only=data_only, read_only=False)
     try:
@@ -385,6 +393,21 @@ def parse_workbook(
 
             cells_out = sorted(by_addr.values(), key=lambda c: coordinate_to_tuple(c["address"]))
 
+            if wb_values is not None:
+                wsv = wb_values[name]
+                for c in cells_out:
+                    if c.get("kind") != "formula":
+                        continue
+                    addr = c.get("address")
+                    if not addr:
+                        continue
+                    try:
+                        cached = wsv[addr].value
+                    except Exception:
+                        continue
+                    if cached is not None:
+                        c["cached_value"] = cached
+
             sheets.append(
                 {
                     "name": name,
@@ -409,12 +432,15 @@ def parse_workbook(
                 "region_max_column_letter": region_max_column_letter,
                 "region_max_row": region_max_row,
                 "region_extra_ranges": list(region_extra_ranges),
+                "merge_cached_values": merge_cached_values and not data_only,
             },
             "sheet_count": len(sheets),
             "sheets": sheets,
         }
     finally:
         wb.close()
+        if wb_values is not None:
+            wb_values.close()
 
 
 def main() -> int:
@@ -482,7 +508,7 @@ def main() -> int:
             f"Default when omitting: {', '.join(DEFAULT_REGION_EXTRA_RANGES)}"
         ),
     )
-    parser.set_defaults(region_clip=True)
+    parser.set_defaults(region_clip=True, merge_cached_values=True)
     parser.add_argument(
         "--json",
         type=Path,
@@ -493,6 +519,12 @@ def main() -> int:
         "--data-only",
         action="store_true",
         help="Load cached values only (formulas become computed values or None if no cache)",
+    )
+    parser.add_argument(
+        "--no-merge-cached-values",
+        action="store_false",
+        dest="merge_cached_values",
+        help="Do not add cached_value for formula cells (second data_only read). Default: merge.",
     )
     parser.add_argument(
         "--summary",
@@ -531,6 +563,7 @@ def main() -> int:
             region_max_column_letter=str(args.region_max_column).upper(),
             region_max_row=int(args.region_max_row),
             region_extra_ranges=extra,
+            merge_cached_values=bool(args.merge_cached_values),
         )
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
