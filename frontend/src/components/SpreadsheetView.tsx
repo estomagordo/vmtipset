@@ -2,18 +2,7 @@ import type { WorkbookCell } from '../types/workbook';
 import { colIndexToLetters } from '../lib/excelAddress';
 import type { GridCell } from '../lib/gridModel';
 
-function truncate(s: string, max: number): string {
-  if (s.length <= max) return s;
-  return `${s.slice(0, max - 1)}…`;
-}
-
-function formatFormulaDisplay(f?: string): string {
-  if (!f) return '';
-  const t = f.startsWith('=') ? f : `=${f}`;
-  return truncate(t, 48);
-}
-
-export type MallSheetProps = {
+export type SpreadsheetViewProps = {
   title: string;
   grid: GridCell[][];
   rowCount: number;
@@ -24,9 +13,27 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
   if (!entry) return null;
 
   if (entry.kind === 'formula') {
+    const cached = entry.cached_value;
+    const hasCached = cached !== undefined && cached !== null;
+    if (hasCached) {
+      const isNum = typeof cached === 'number';
+      return (
+        <span
+          className={isNum ? 'excel-cell-num' : 'excel-cell-text'}
+          title={entry.formula ? String(entry.formula) : undefined}
+        >
+          {String(cached)}
+        </span>
+      );
+    }
+    // Excel often stores no cached value when IF(...,"",...) yields blank (e.g. unset bracket).
+    // Normal Excel UI shows an empty cell, not the formula text.
     return (
-      <span className="excel-cell-formula" title={entry.formula}>
-        {formatFormulaDisplay(entry.formula)}
+      <span
+        className="excel-cell-text"
+        title={entry.formula ? `Formula (not cached in file): ${entry.formula}` : undefined}
+      >
+        {'\u00a0'}
       </span>
     );
   }
@@ -57,14 +64,17 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
   return null;
 }
 
-export function MallSheet({ title, grid, rowCount, colCount }: MallSheetProps) {
-  const letters = Array.from({ length: colCount }, (_, i) => colIndexToLetters(i + 1));
+export function SpreadsheetView({ title, grid, rowCount, colCount }: SpreadsheetViewProps) {
+  const columnLabels = Array.from({ length: colCount }, (_, i) => colIndexToLetters(i + 1));
 
   return (
     <div className="excel-shell">
       <header className="excel-docbar">
         <h1 className="excel-title">{title}</h1>
-        <p className="excel-sub">Klientgränssnitt inspirerat av Excel-mallen (kolumner A–T).</p>
+        <p className="excel-sub">
+          Columns A–T. Formula cells without a saved value in the workbook render empty (like Excel); hover for the
+          formula.
+        </p>
       </header>
 
       <div className="excel-scroll">
@@ -72,37 +82,38 @@ export function MallSheet({ title, grid, rowCount, colCount }: MallSheetProps) {
           <thead>
             <tr>
               <th className="excel-gutter excel-gutter-corner" scope="col" />
-              {letters.map((L) => (
-                <th key={L} className="excel-gutter excel-col-head" scope="col">
-                  {L}
+              {columnLabels.map((letter) => (
+                <th key={letter} className="excel-gutter excel-col-head" scope="col">
+                  {letter}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {grid.map((row, ri) => (
-              <tr key={ri} aria-rowindex={ri + 2}>
+            {grid.map((row, rowIndex) => (
+              <tr key={rowIndex} aria-rowindex={rowIndex + 2}>
                 <th className="excel-gutter excel-row-head" scope="row">
-                  {ri + 1}
+                  {rowIndex + 1}
                 </th>
-                {row.map((cell: GridCell, ci) => {
-                  void ci;
+                {row.map((cell: GridCell, columnIndex) => {
+                  void columnIndex;
                   if (cell.kind === 'skip') return null;
                   const entry = cell.entry;
                   const hasValidation = Boolean(entry?.validation?.type === 'list');
                   const isFormula = entry?.kind === 'formula';
-                  const cls = [
+                  const className = [
                     'excel-cell',
-                    entry?.kind === 'number' ? 'excel-align-right' : 'excel-align-left',
+                    entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
+                      ? 'excel-align-right'
+                      : 'excel-align-left',
                     hasValidation ? 'excel-cell-validated' : '',
-                    isFormula ? 'excel-cell-is-formula' : '',
                   ]
                     .filter(Boolean)
                     .join(' ');
                   return (
                     <td
                       key={cell.address}
-                      className={cls}
+                      className={className}
                       rowSpan={cell.rowSpan}
                       colSpan={cell.colSpan}
                       data-address={cell.address}

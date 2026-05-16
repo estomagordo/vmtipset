@@ -24,10 +24,10 @@ function cellMapFromSheet(sheet: WorkbookSheet): Map<string, WorkbookCell> {
 }
 
 function inferRowCount(sheet: WorkbookSheet, colCount: number, regionMaxRowHint: number): number {
-  let maxR = 1;
+  let maxRow = 1;
 
   for (const c of sheet.cells) {
-    maxR = Math.max(maxR, parseA1(c.address).row);
+    maxRow = Math.max(maxRow, parseA1(c.address).row);
   }
 
   for (const raw of sheet.merged_ranges) {
@@ -35,15 +35,15 @@ function inferRowCount(sheet: WorkbookSheet, colCount: number, regionMaxRowHint:
       try {
         const b = rangeBounds(spec);
         const clipped = clipRangeBounds(b, 99999, colCount);
-        if (clipped) maxR = Math.max(maxR, clipped.r1);
+        if (clipped) maxRow = Math.max(maxRow, clipped.r1);
       } catch {
         /* ignore */
       }
     }
   }
 
-  if (regionMaxRowHint > 0) maxR = Math.max(maxR, regionMaxRowHint);
-  return maxR;
+  if (regionMaxRowHint > 0) maxRow = Math.max(maxRow, regionMaxRowHint);
+  return maxRow;
 }
 
 /** 0-based grid[row][col] */
@@ -55,8 +55,8 @@ export function buildGridFromDump(data: WorkbookDump): {
 } {
   const sheet = data.sheets[0];
   const colCount = lettersToColIndex(String(data.parse?.region_max_column_letter ?? 'T'));
-  const hint = Number(data.parse?.region_max_row);
-  const rowCount = inferRowCount(sheet, colCount, Number.isFinite(hint) ? hint : 0);
+  const rowCountHint = Number(data.parse?.region_max_row);
+  const rowCount = inferRowCount(sheet, colCount, Number.isFinite(rowCountHint) ? rowCountHint : 0);
   const cellByAddress = cellMapFromSheet(sheet);
 
   const grid: GridCell[][] = [];
@@ -90,18 +90,18 @@ export function buildGridFromDump(data: WorkbookDump): {
 
       const rowSpan = clipped.r1 - clipped.r0 + 1;
       const colSpan = clipped.c1 - clipped.c0 + 1;
-      const r0 = clipped.r0 - 1;
-      const c0 = clipped.c0 - 1;
+      const anchorRow = clipped.r0 - 1;
+      const anchorCol = clipped.c0 - 1;
 
-      const anchor = grid[r0][c0];
+      const anchor = grid[anchorRow][anchorCol];
       if (anchor.kind !== 'anchor') continue;
       anchor.rowSpan = rowSpan;
       anchor.colSpan = colSpan;
 
-      for (let rr = clipped.r0 - 1; rr < clipped.r1; rr++) {
-        for (let cc = clipped.c0 - 1; cc < clipped.c1; cc++) {
-          if (rr === r0 && cc === c0) continue;
-          grid[rr][cc] = { kind: 'skip' };
+      for (let rowIdx = clipped.r0 - 1; rowIdx < clipped.r1; rowIdx++) {
+        for (let colIdx = clipped.c0 - 1; colIdx < clipped.c1; colIdx++) {
+          if (rowIdx === anchorRow && colIdx === anchorCol) continue;
+          grid[rowIdx][colIdx] = { kind: 'skip' };
         }
       }
     }

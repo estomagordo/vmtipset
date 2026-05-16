@@ -16,6 +16,8 @@ export type WorkbookCell = {
   kind: CellKind;
   value?: unknown;
   formula?: string;
+  /** Last value Excel stored for this formula (data_only read); not recomputed in the browser. */
+  cached_value?: unknown;
   number_format?: string;
   validation?: DataValidation;
 };
