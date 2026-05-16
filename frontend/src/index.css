@@ -1,0 +1,196 @@
+:root {
+  --excel-face: Calibri, 'Carlito', 'Segoe UI', Arial, sans-serif;
+  --excel-grid: #d2d2d2;
+  --excel-bg: #ffffff;
+  --excel-gutter-bg: #f2f2f2;
+  --excel-gutter-edge: #c8c8c8;
+  --excel-formula: #006400;
+  --excel-valid-bg: #fffbe6;
+  --excel-header-bar: #217346;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #e8e8e8;
+  color: #111;
+  font-family: var(--excel-face);
+  font-size: 11pt;
+  line-height: 1.25;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.excel-app {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.excel-loading,
+.excel-error {
+  margin: 1.5rem;
+  font-size: 14px;
+}
+
+.excel-error {
+  color: #a4262c;
+}
+
+.excel-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.excel-docbar {
+  flex: 0 0 auto;
+  background: linear-gradient(to bottom, #f7f7f7, #ececec);
+  border-bottom: 1px solid #c2c2c2;
+  padding: 0.55rem 1rem 0.5rem;
+  box-shadow: 0 1px 0 #fff inset;
+}
+
+.excel-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.excel-sub {
+  margin: 0.2rem 0 0;
+  font-size: 11px;
+  color: #555;
+}
+
+.excel-scroll {
+  flex: 1 1 auto;
+  overflow: auto;
+  background: var(--excel-bg);
+  border-top: 3px solid var(--excel-header-bar);
+}
+
+.excel-grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--excel-bg);
+  margin: 0;
+}
+
+.excel-gutter {
+  position: sticky;
+  background: var(--excel-gutter-bg);
+  border: 1px solid var(--excel-gutter-edge);
+  font-size: 10px;
+  font-weight: 600;
+  color: #444;
+  text-align: center;
+  vertical-align: middle;
+  min-width: 2.25rem;
+  width: 2.25rem;
+  padding: 0;
+  z-index: 2;
+}
+
+.excel-gutter-corner {
+  left: 0;
+  top: 0;
+  z-index: 3;
+  min-width: 2.25rem;
+}
+
+.excel-col-head {
+  top: 0;
+  min-width: 4.75rem;
+  width: 4.75rem;
+  height: 1.35rem;
+}
+
+.excel-row-head {
+  left: 0;
+  height: 1.25rem;
+  min-width: 2.25rem;
+}
+
+.excel-cell {
+  border-right: 1px solid var(--excel-grid);
+  border-bottom: 1px solid var(--excel-grid);
+  background: var(--excel-bg);
+  padding: 1px 3px;
+  height: 1.35rem;
+  min-height: 1.35rem;
+  min-width: 4.75rem;
+  width: 4.75rem;
+  vertical-align: middle;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.excel-align-right {
+  text-align: right;
+}
+
+.excel-align-left {
+  text-align: left;
+}
+
+.excel-cell-text,
+.excel-cell-num {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.excel-cell-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.excel-cell-formula {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: var(--excel-formula);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.excel-cell-is-formula {
+  background: #f7fff7;
+}
+
+.excel-cell-validated {
+  background: var(--excel-valid-bg);
+}
+
+.excel-dropdown {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 1px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  height: 1.15rem;
+}
+
+.excel-dropdown:focus {
+  outline: 2px solid #217346;
+  outline-offset: -2px;
+}
+
+code {
+  font-size: 0.9em;
+}

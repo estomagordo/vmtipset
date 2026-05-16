@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .DS_Store
 tools/workbook_dump.json
+frontend/node_modules/
+frontend/dist/
