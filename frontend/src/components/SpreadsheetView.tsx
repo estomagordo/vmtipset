@@ -15,6 +15,7 @@ import {
 } from '../lib/scoreCells';
 import { lettersToColIndex } from '../lib/excelAddress';
 import { translateWorkbookString } from '../i18n/workbookStrings';
+import { isMetaFreeTextCell } from '../lib/metaTextFields';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -28,15 +29,50 @@ export type SpreadsheetViewProps = {
 const STANDINGS_COL_START = lettersToColIndex('K');
 const STANDINGS_COL_END = lettersToColIndex('S');
 
+function normalizeCellAddress(address: string): string {
+  return address.trim().toUpperCase().replace(/\$/g, '');
+}
+
 type CellBodyProps = {
+  address: string;
   entry?: WorkbookCell;
   scoreDrafts: Record<string, string>;
+  metaDrafts: Record<string, string>;
+  onMetaDraft: (normalizedAddress: string, value: string) => void;
   onScoreDraft: (address: string, value: string) => void;
   standingTables: Map<string, StandingRow[] | null>;
 };
 
-function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBodyProps) {
+function CellBody({
+  address,
+  entry,
+  scoreDrafts,
+  metaDrafts,
+  onMetaDraft,
+  onScoreDraft,
+  standingTables,
+}: CellBodyProps) {
   const { t, i18n } = useTranslation('app');
+  const key = normalizeCellAddress(address);
+
+  if (isMetaFreeTextCell(key)) {
+    const fromDraft = Object.prototype.hasOwnProperty.call(metaDrafts, key);
+    const initial =
+      entry?.value != null && entry.value !== '' ? String(entry.value) : '';
+    const value = fromDraft ? metaDrafts[key] : initial;
+    const aria = key === 'G4' ? t('aria.playerName') : t('aria.playerEmail');
+    return (
+      <input
+        type={key === 'G6' ? 'email' : 'text'}
+        name={key === 'G4' ? 'playerName' : 'playerEmail'}
+        className="tipset-text-input"
+        value={value}
+        onChange={(e) => onMetaDraft(key, e.target.value)}
+        aria-label={aria}
+        autoComplete={key === 'G6' ? 'email' : 'name'}
+      />
+    );
+  }
 
   if (!entry) return null;
 
@@ -139,8 +175,14 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
 export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress }: SpreadsheetViewProps) {
   const { t } = useTranslation('app');
   const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
+  const [metaDrafts, setMetaDrafts] = useState<Record<string, string>>({});
+
   const onScoreDraft = useCallback((address: string, value: string) => {
     setScoreDrafts((d) => ({ ...d, [address]: value }));
+  }, []);
+
+  const onMetaDraft = useCallback((normalizedAddress: string, value: string) => {
+    setMetaDrafts((d) => ({ ...d, [normalizedAddress]: value }));
   }, []);
 
   const standingTables = useMemo(
@@ -165,46 +207,59 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
             aria-colcount={colCount}
           >
             <tbody>
-              {grid.map((row, rowIndex) => (
-                <tr key={rowIndex} aria-rowindex={rowIndex + 1}>
-                  {row.map((cell: GridCell, columnIndex) => {
-                    if (cell.kind === 'skip') return null;
-                    const entry = cell.entry;
-                    const gridCol = columnIndex + 1;
-                    const isStandingsColumn =
-                      gridCol >= STANDINGS_COL_START && gridCol <= STANDINGS_COL_END;
-                    const hasListValidation = entry?.validation?.type === 'list';
-                    const isFormula = entry?.kind === 'formula';
-                    const className = [
-                      'tipset-cell',
-                      entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
-                        ? 'tipset-align-right'
-                        : 'tipset-align-left',
-                      isStandingsColumn ? 'tipset-cell--standings' : '',
-                      hasListValidation ? 'tipset-cell--input' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
-                    return (
-                      <td
-                        key={cell.address}
-                        className={className}
-                        rowSpan={cell.rowSpan}
-                        colSpan={cell.colSpan}
-                        data-address={cell.address}
-                        aria-colindex={gridCol}
-                      >
-                        <CellBody
-                          entry={entry}
-                          scoreDrafts={scoreDrafts}
-                          onScoreDraft={onScoreDraft}
-                          standingTables={standingTables}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {grid.map((row, rowIndex) => {
+                const excelRow = rowIndex + 1;
+                const isMetaBlockRow = excelRow < 10;
+                return (
+                  <tr
+                    key={rowIndex}
+                    aria-rowindex={excelRow}
+                    className={isMetaBlockRow ? 'tipset-row--meta' : undefined}
+                  >
+                    {row.map((cell: GridCell, columnIndex) => {
+                      if (cell.kind === 'skip') return null;
+                      const entry = cell.entry;
+                      const gridCol = columnIndex + 1;
+                      const addrNorm = normalizeCellAddress(cell.address);
+                      const isMetaTextField = isMetaFreeTextCell(addrNorm);
+                      const isStandingsColumn =
+                        gridCol >= STANDINGS_COL_START && gridCol <= STANDINGS_COL_END;
+                      const hasListValidation = entry?.validation?.type === 'list';
+                      const isFormula = entry?.kind === 'formula';
+                      const className = [
+                        'tipset-cell',
+                        entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
+                          ? 'tipset-align-right'
+                          : 'tipset-align-left',
+                        isStandingsColumn ? 'tipset-cell--standings' : '',
+                        hasListValidation || isMetaTextField ? 'tipset-cell--input' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ');
+                      return (
+                        <td
+                          key={cell.address}
+                          className={className}
+                          rowSpan={cell.rowSpan}
+                          colSpan={cell.colSpan}
+                          data-address={cell.address}
+                          aria-colindex={gridCol}
+                        >
+                          <CellBody
+                            address={cell.address}
+                            entry={entry}
+                            scoreDrafts={scoreDrafts}
+                            metaDrafts={metaDrafts}
+                            onMetaDraft={onMetaDraft}
+                            onScoreDraft={onScoreDraft}
+                            standingTables={standingTables}
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

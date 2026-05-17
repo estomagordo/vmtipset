@@ -17,6 +17,8 @@
   },
   "aria": {
     "dropdownCell": "Cell {{address}}",
-    "scorePicker": "Predicted goals for match, cell {{address}}"
+    "scorePicker": "Predicted goals for match, cell {{address}}",
+    "playerName": "Your name",
+    "playerEmail": "Your email address"
   }
 }

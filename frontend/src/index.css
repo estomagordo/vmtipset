@@ -9,7 +9,6 @@
   --tipset-blue-row: #e8f0fb;
   --tipset-page-bg: linear-gradient(180deg, #ddebf7 0%, #e8eef6 40%, #edf2f8 100%);
   --tipset-surface: #ffffff;
-  --tipset-grid-line: rgba(47, 85, 151, 0.12);
   --tipset-text: #1a1a1a;
   --tipset-text-muted: #4a5568;
   --tipset-focus: #2f5597;
@@ -93,39 +92,41 @@ body {
 }
 
 .tipset-table-wrap {
-  max-width: min(100%, 1180px);
+  width: 100%;
+  max-width: min(100%, 1680px);
   margin: 0 auto;
   background: var(--tipset-surface);
   border-radius: 10px;
   box-shadow: 0 2px 12px rgba(47, 85, 151, 0.1);
   border: 1px solid rgba(47, 85, 151, 0.14);
-  overflow: auto;
+  overflow-x: auto;
 }
 
 .tipset-table {
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
-  width: 100%;
+  table-layout: auto;
+  width: auto;
   background: var(--tipset-surface);
   margin: 0;
 }
 
 .tipset-cell {
-  border-right: 1px solid var(--tipset-grid-line);
-  border-bottom: 1px solid var(--tipset-grid-line);
-  padding: 2px 5px;
-  min-height: 1.5rem;
-  min-width: 3.25rem;
-  width: 4.6rem;
+  border: none;
+  padding: 3px 7px;
+  min-width: 0;
   vertical-align: middle;
-  overflow: hidden;
-  word-break: break-word;
+  overflow: visible;
   background: var(--tipset-surface);
 }
 
-.tipset-cell:last-child {
-  border-right: none;
+.tipset-row--meta .tipset-cell {
+  padding: 0.45rem 0.65rem;
+  vertical-align: middle;
+}
+
+.tipset-row--meta .tipset-cell.tipset-align-left {
+  text-align: left;
 }
 
 .tipset-cell--standings {
@@ -152,7 +153,7 @@ body {
 .tipset-cell-text,
 .tipset-cell-num {
   display: block;
-  white-space: pre-wrap;
+  white-space: nowrap;
 }
 
 .tipset-cell-num {
@@ -160,12 +161,31 @@ body {
   font-size: 12.5px;
 }
 
-.tipset-select {
+.tipset-text-input {
   display: block;
   width: 100%;
+  min-width: 14rem;
+  margin: 0;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--tipset-input-border);
+  border-radius: 4px;
+  background: var(--tipset-input-bg);
+  font: inherit;
+  color: inherit;
+}
+
+.tipset-text-input:focus {
+  outline: 2px solid var(--tipset-focus);
+  outline-offset: 1px;
+}
+
+.tipset-select {
+  display: block;
+  width: max-content;
+  min-width: 2.75rem;
   max-width: 100%;
   margin: 0;
-  padding: 2px 4px;
+  padding: 2px 5px;
   border: 1px solid var(--tipset-input-border);
   border-radius: 4px;
   background: var(--tipset-input-bg);
@@ -173,6 +193,7 @@ body {
   color: inherit;
   cursor: pointer;
   min-height: 1.35rem;
+  white-space: nowrap;
 }
 
 .tipset-select:focus {

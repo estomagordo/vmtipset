@@ -17,6 +17,8 @@
   },
   "aria": {
     "dropdownCell": "Cell {{address}}",
-    "scorePicker": "Tipsmål, cell {{address}}"
+    "scorePicker": "Tipsmål, cell {{address}}",
+    "playerName": "Ditt namn",
+    "playerEmail": "Din e-postadress"
   }
 }
