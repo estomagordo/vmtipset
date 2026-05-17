@@ -214,9 +214,13 @@ function CellBody({
 }
 
 const COL_B = lettersToColIndex('B');
+const COL_C = lettersToColIndex('C');
+const COL_D = lettersToColIndex('D');
 const COL_E = lettersToColIndex('E');
 const COL_F = lettersToColIndex('F');
 const COL_K = lettersToColIndex('K');
+const COL_L = lettersToColIndex('L');
+const COL_T = lettersToColIndex('T');
 
 type SheetRowProps = {
   row: GridCell[];
@@ -268,13 +272,30 @@ function SheetRow({
         const afterAwayScore = Boolean(groupCtx && gridCol === COL_F);
 
         const is1x2Col = Boolean(groupCtx && gridCol >= COL_G && gridCol <= COL_I);
+        const isGroupDashCol = Boolean(groupCtx && gridCol === COL_D);
+        const isGroupStatHeaderNumCol = Boolean(
+          groupCtx && groupCtx.rowInBlock === 0 && gridCol >= COL_L && gridCol <= COL_T,
+        );
+        const isGroupScoreCol = Boolean(
+          groupCtx &&
+            groupCtx.rowInBlock >= 1 &&
+            (gridCol === COL_C || gridCol === COL_E) &&
+            entry &&
+            isScoreDigitListValidation(entry.validation),
+        );
         const alignNum =
           entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number');
         const alignClass = is1x2Col
           ? 'tipset-align-center'
-          : alignNum
-            ? 'tipset-align-right'
-            : 'tipset-align-left';
+          : isGroupDashCol
+            ? 'tipset-align-center'
+            : isGroupStatHeaderNumCol
+              ? 'tipset-align-right'
+              : isGroupScoreCol
+                ? 'tipset-align-right'
+                : alignNum
+                  ? 'tipset-align-right'
+                  : 'tipset-align-left';
 
         const className = [
           'tipset-cell',

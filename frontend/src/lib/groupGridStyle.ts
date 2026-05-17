@@ -1,6 +1,7 @@
 import { lettersToColIndex } from './excelAddress';
 
 const COL_D = lettersToColIndex('D');
+const COL_J = lettersToColIndex('J');
 const COL_K = lettersToColIndex('K');
 const COL_T = lettersToColIndex('T');
 
@@ -20,6 +21,14 @@ export function classifyGroupGridCell(
 
   /* Hyphen column stays accent on every row; match index (J) only on header row. */
   if (gridCol === COL_D) {
+    tier.push('tipset-cell--grp-dj');
+    /* Stacking: keep full separator band above neighbouring score <select> painting. */
+    tier.push('tipset-cell--grp-sep');
+    return tier;
+  }
+
+  /* Match index (J): rows showing 1–4 in the mall, not the two fixture rows below. */
+  if (gridCol === COL_J && rowInBlock >= 1 && rowInBlock <= 4) {
     tier.push('tipset-cell--grp-dj');
     return tier;
   }
@@ -42,8 +51,9 @@ export function classifyGroupGridCell(
 }
 
 /** Percent widths for group-stage columns (A–T); sum = 100 (used with `table-layout: fixed`). */
+/** A=wider match nr, C/E=readable scores, D=wider ― band; trims elsewhere to keep sum 100. */
 export const GROUP_COL_WIDTH_PCT: readonly number[] = [
-  4, 10, 4, 2, 4, 10, 4, 4, 4, 4, 13, 4, 4, 4, 4, 4, 4, 4, 4, 5,
+  7, 9, 7, 4, 7, 9, 3, 3, 3, 3, 8, 4, 4, 4, 4, 4, 4, 4, 4, 5,
 ] as const;
 
 /** Column width hints for compact match / prediction layout (A–T). */
