@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "defaultSheetTitle": "VM-tipset"
+  },
+  "loadError": "Failed to load workbook_dump.json: {{error}}",
+  "loadErrorHint": "Run the parse script with --json to tools/workbook_dump.json, copy it to frontend/public/, and refresh.",
+  "loading": "Loading workbook…",
+  "spreadsheet": {
+    "subtitle": "Columns A–T. Formula cells with no saved value in the file render empty (like Excel); hover for the formula."
+  },
+  "formula": {
+    "tooltipNotCached": "Formula (not cached in file): {{formula}}"
+  },
+  "choices": {
+    "yes": "Yes",
+    "no": "No"
+  },
+  "aria": {
+    "dropdownCell": "Cell {{address}}"
+  }
+}

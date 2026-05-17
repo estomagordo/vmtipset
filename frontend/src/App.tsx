@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SpreadsheetView } from './components/SpreadsheetView';
 import { buildGridFromDump } from './lib/gridModel';
 import type { WorkbookDump } from './types/workbook';
 
 export default function App() {
+  const { t } = useTranslation('app');
   const [dump, setDump] = useState<WorkbookDump | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,12 +34,8 @@ export default function App() {
   if (error) {
     return (
       <div className="excel-app">
-        <p className="excel-error">Failed to load workbook_dump.json: {error}</p>
-        <p className="excel-sub">
-          Run{' '}
-          <code>python tools/parse_workbook.py ... --json tools/workbook_dump.json</code> and copy it to{' '}
-          <code>frontend/public/</code>.
-        </p>
+        <p className="excel-error">{t('loadError', { error })}</p>
+        <p className="excel-sub">{t('loadErrorHint')}</p>
       </div>
     );
   }
@@ -45,12 +43,12 @@ export default function App() {
   if (!gridModel || !dump) {
     return (
       <div className="excel-app">
-        <p className="excel-loading">Loading workbook…</p>
+        <p className="excel-loading">{t('loading')}</p>
       </div>
     );
   }
 
-  const sheetTitle = dump.sheets[0]?.name ?? 'VM-tipset';
+  const sheetTitle = dump.sheets[0]?.name ?? t('meta.defaultSheetTitle');
 
   return (
     <div className="excel-app">

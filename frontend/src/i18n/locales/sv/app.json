@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "defaultSheetTitle": "VM-tipset"
+  },
+  "loadError": "Kunde inte ladda workbook_dump.json: {{error}}",
+  "loadErrorHint": "Kör parse-skriptet med --json till tools/workbook_dump.json, kopiera till frontend/public/, och uppdatera sidan.",
+  "loading": "Laddar arbetsbok…",
+  "spreadsheet": {
+    "subtitle": "Kolumner A–T. Formelceller utan sparad beräkning i filen visas tomma (som i Excel); hovra för formeln."
+  },
+  "formula": {
+    "tooltipNotCached": "Formel (ej cachad i filen): {{formula}}"
+  },
+  "choices": {
+    "yes": "Ja",
+    "no": "Nej"
+  },
+  "aria": {
+    "dropdownCell": "Cell {{address}}"
+  }
+}

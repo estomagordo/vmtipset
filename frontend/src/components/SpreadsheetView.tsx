@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import type { WorkbookCell } from '../types/workbook';
 import { colIndexToLetters } from '../lib/excelAddress';
 import type { GridCell } from '../lib/gridModel';
+import { translateWorkbookString } from '../i18n/workbookStrings';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -10,6 +12,8 @@ export type SpreadsheetViewProps = {
 };
 
 function CellBody({ entry }: { entry?: WorkbookCell }) {
+  const { t, i18n } = useTranslation('app');
+
   if (!entry) return null;
 
   if (entry.kind === 'formula') {
@@ -17,12 +21,13 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
     const hasCached = cached !== undefined && cached !== null;
     if (hasCached) {
       const isNum = typeof cached === 'number';
+      const text = isNum ? String(cached) : translateWorkbookString(String(cached), i18n);
       return (
         <span
           className={isNum ? 'excel-cell-num' : 'excel-cell-text'}
           title={entry.formula ? String(entry.formula) : undefined}
         >
-          {String(cached)}
+          {text}
         </span>
       );
     }
@@ -31,7 +36,9 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
     return (
       <span
         className="excel-cell-text"
-        title={entry.formula ? `Formula (not cached in file): ${entry.formula}` : undefined}
+        title={
+          entry.formula ? t('formula.tooltipNotCached', { formula: entry.formula }) : undefined
+        }
       >
         {'\u00a0'}
       </span>
@@ -42,13 +49,20 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
     const v = entry.validation;
     if (v?.type === 'list' && Array.isArray(v.list_values) && v.list_values.length > 0) {
       return (
-        <select className="excel-dropdown" aria-label={entry.address} defaultValue="">
+        <select
+          className="excel-dropdown"
+          aria-label={t('aria.dropdownCell', { address: entry.address })}
+          defaultValue=""
+        >
           <option value=""> </option>
-          {v.list_values.map((opt) => (
-            <option key={String(opt)} value={String(opt)}>
-              {String(opt)}
-            </option>
-          ))}
+          {v.list_values.map((opt) => {
+            const s = String(opt);
+            return (
+              <option key={s} value={s}>
+                {translateWorkbookString(s, i18n)}
+              </option>
+            );
+          })}
         </select>
       );
     }
@@ -56,8 +70,10 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
   }
 
   if (entry.value != null && entry.value !== '') {
+    const raw = String(entry.value);
+    const text = entry.kind === 'number' ? raw : translateWorkbookString(raw, i18n);
     return (
-      <span className={entry.kind === 'number' ? 'excel-cell-num' : 'excel-cell-text'}>{String(entry.value)}</span>
+      <span className={entry.kind === 'number' ? 'excel-cell-num' : 'excel-cell-text'}>{text}</span>
     );
   }
 
@@ -65,16 +81,14 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
 }
 
 export function SpreadsheetView({ title, grid, rowCount, colCount }: SpreadsheetViewProps) {
+  const { t } = useTranslation('app');
   const columnLabels = Array.from({ length: colCount }, (_, i) => colIndexToLetters(i + 1));
 
   return (
     <div className="excel-shell">
       <header className="excel-docbar">
         <h1 className="excel-title">{title}</h1>
-        <p className="excel-sub">
-          Columns A–T. Formula cells without a saved value in the workbook render empty (like Excel); hover for the
-          formula.
-        </p>
+        <p className="excel-sub">{t('spreadsheet.subtitle')}</p>
       </header>
 
       <div className="excel-scroll">
