@@ -6,7 +6,7 @@
   "loadErrorHint": "Run the parse script with --json to tools/workbook_dump.json, copy it to frontend/public/, and refresh.",
   "loading": "Loading workbook…",
   "spreadsheet": {
-    "subtitle": "Columns A–T. Formula cells with no saved value in the file render empty (like Excel); hover for the formula."
+    "subtitle": "Yellow cells are your score picks. Blue columns show group tables that update as you go."
   },
   "formula": {
     "tooltipNotCached": "Formula (not cached in file): {{formula}}"

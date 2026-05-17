@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkbookCell } from '../types/workbook';
-import { colIndexToLetters } from '../lib/excelAddress';
 import type { GridCell } from '../lib/gridModel';
 import {
   computeGroupStandings,
@@ -14,6 +13,7 @@ import {
   isScoreDigitListValidation,
   SCORE_OPTION_VALUES,
 } from '../lib/scoreCells';
+import { lettersToColIndex } from '../lib/excelAddress';
 import { translateWorkbookString } from '../i18n/workbookStrings';
 
 export type SpreadsheetViewProps = {
@@ -23,6 +23,10 @@ export type SpreadsheetViewProps = {
   colCount: number;
   cellByAddress: Map<string, WorkbookCell>;
 };
+
+/** 1-based inclusive column range K–S (standings block in the mall). */
+const STANDINGS_COL_START = lettersToColIndex('K');
+const STANDINGS_COL_END = lettersToColIndex('S');
 
 type CellBodyProps = {
   entry?: WorkbookCell;
@@ -44,7 +48,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
       const text = isNum ? String(v) : translateWorkbookString(String(v), i18n);
       return (
         <span
-          className={isNum ? 'excel-cell-num' : 'excel-cell-text'}
+          className={isNum ? 'tipset-cell-num' : 'tipset-cell-text'}
           title={entry.formula ? String(entry.formula) : undefined}
         >
           {text}
@@ -59,7 +63,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
       const text = isNum ? String(cached) : translateWorkbookString(String(cached), i18n);
       return (
         <span
-          className={isNum ? 'excel-cell-num' : 'excel-cell-text'}
+          className={isNum ? 'tipset-cell-num' : 'tipset-cell-text'}
           title={entry.formula ? String(entry.formula) : undefined}
         >
           {text}
@@ -68,7 +72,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
     }
     return (
       <span
-        className="excel-cell-text"
+        className="tipset-cell-text"
         title={
           entry.formula ? t('formula.tooltipNotCached', { formula: entry.formula }) : undefined
         }
@@ -82,7 +86,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
     const value = getScoreSelectValue(entry.address, entry, scoreDrafts);
     return (
       <select
-        className="excel-dropdown excel-score-select"
+        className="tipset-select tipset-select--in-cell"
         aria-label={t('aria.scorePicker', { address: entry.address })}
         value={value}
         onChange={(e) => onScoreDraft(entry.address, e.target.value)}
@@ -102,7 +106,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
     if (v?.type === 'list' && Array.isArray(v.list_values) && v.list_values.length > 0) {
       return (
         <select
-          className="excel-dropdown"
+          className="tipset-select tipset-select--in-cell"
           aria-label={t('aria.dropdownCell', { address: entry.address })}
           defaultValue=""
         >
@@ -125,7 +129,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
     const raw = String(entry.value);
     const text = entry.kind === 'number' ? raw : translateWorkbookString(raw, i18n);
     return (
-      <span className={entry.kind === 'number' ? 'excel-cell-num' : 'excel-cell-text'}>{text}</span>
+      <span className={entry.kind === 'number' ? 'tipset-cell-num' : 'tipset-cell-text'}>{text}</span>
     );
   }
 
@@ -144,69 +148,66 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
     [cellByAddress, scoreDrafts],
   );
 
-  const columnLabels = Array.from({ length: colCount }, (_, i) => colIndexToLetters(i + 1));
-
   return (
-    <div className="excel-shell">
-      <header className="excel-docbar">
-        <h1 className="excel-title">{title}</h1>
-        <p className="excel-sub">{t('spreadsheet.subtitle')}</p>
+    <div className="tipset-shell">
+      <header className="tipset-header">
+        <h1 className="tipset-title">{title}</h1>
+        <p className="tipset-sub">{t('spreadsheet.subtitle')}</p>
       </header>
 
-      <div className="excel-scroll">
-        <table className="excel-grid" role="grid" aria-rowcount={rowCount + 1} aria-colcount={colCount + 1}>
-          <thead>
-            <tr>
-              <th className="excel-gutter excel-gutter-corner" scope="col" />
-              {columnLabels.map((letter) => (
-                <th key={letter} className="excel-gutter excel-col-head" scope="col">
-                  {letter}
-                </th>
+      <div className="tipset-scroll">
+        <div className="tipset-table-wrap">
+          <table
+            className="tipset-table"
+            role="grid"
+            aria-label={title}
+            aria-rowcount={rowCount}
+            aria-colcount={colCount}
+          >
+            <tbody>
+              {grid.map((row, rowIndex) => (
+                <tr key={rowIndex} aria-rowindex={rowIndex + 1}>
+                  {row.map((cell: GridCell, columnIndex) => {
+                    if (cell.kind === 'skip') return null;
+                    const entry = cell.entry;
+                    const gridCol = columnIndex + 1;
+                    const isStandingsColumn =
+                      gridCol >= STANDINGS_COL_START && gridCol <= STANDINGS_COL_END;
+                    const hasListValidation = entry?.validation?.type === 'list';
+                    const isFormula = entry?.kind === 'formula';
+                    const className = [
+                      'tipset-cell',
+                      entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
+                        ? 'tipset-align-right'
+                        : 'tipset-align-left',
+                      isStandingsColumn ? 'tipset-cell--standings' : '',
+                      hasListValidation ? 'tipset-cell--input' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
+                    return (
+                      <td
+                        key={cell.address}
+                        className={className}
+                        rowSpan={cell.rowSpan}
+                        colSpan={cell.colSpan}
+                        data-address={cell.address}
+                        aria-colindex={gridCol}
+                      >
+                        <CellBody
+                          entry={entry}
+                          scoreDrafts={scoreDrafts}
+                          onScoreDraft={onScoreDraft}
+                          standingTables={standingTables}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {grid.map((row, rowIndex) => (
-              <tr key={rowIndex} aria-rowindex={rowIndex + 2}>
-                <th className="excel-gutter excel-row-head" scope="row">
-                  {rowIndex + 1}
-                </th>
-                {row.map((cell: GridCell, columnIndex) => {
-                  void columnIndex;
-                  if (cell.kind === 'skip') return null;
-                  const entry = cell.entry;
-                  const hasListValidation = entry?.validation?.type === 'list';
-                  const isFormula = entry?.kind === 'formula';
-                  const className = [
-                    'excel-cell',
-                    entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
-                      ? 'excel-align-right'
-                      : 'excel-align-left',
-                    hasListValidation ? 'excel-cell-validated' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
-                  return (
-                    <td
-                      key={cell.address}
-                      className={className}
-                      rowSpan={cell.rowSpan}
-                      colSpan={cell.colSpan}
-                      data-address={cell.address}
-                    >
-                      <CellBody
-                        entry={entry}
-                        scoreDrafts={scoreDrafts}
-                        onScoreDraft={onScoreDraft}
-                        standingTables={standingTables}
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -34,17 +34,17 @@ export default function App() {
 
   if (error) {
     return (
-      <div className="excel-app">
-        <p className="excel-error">{t('loadError', { error })}</p>
-        <p className="excel-sub">{t('loadErrorHint')}</p>
+      <div className="tipset-app">
+        <p className="tipset-error">{t('loadError', { error })}</p>
+        <p className="tipset-error-hint">{t('loadErrorHint')}</p>
       </div>
     );
   }
 
   if (!gridModel || !dump) {
     return (
-      <div className="excel-app">
-        <p className="excel-loading">{t('loading')}</p>
+      <div className="tipset-app">
+        <p className="tipset-loading">{t('loading')}</p>
       </div>
     );
   }
@@ -53,7 +53,7 @@ export default function App() {
   const sheetTitle = translateWorkbookString(rawSheetTitle, i18n);
 
   return (
-    <div className="excel-app">
+    <div className="tipset-app">
       <SpreadsheetView
         title={sheetTitle}
         grid={gridModel.grid}

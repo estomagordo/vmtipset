@@ -6,7 +6,7 @@
   "loadErrorHint": "Kör parse-skriptet med --json till tools/workbook_dump.json, kopiera till frontend/public/, och uppdatera sidan.",
   "loading": "Laddar arbetsbok…",
   "spreadsheet": {
-    "subtitle": "Kolumner A–T. Formelceller utan sparad beräkning i filen visas tomma (som i Excel); hovra för formeln."
+    "subtitle": "Gula fält är måltips. Blå kolumner visar grupptabeller som uppdateras medan du fyller i."
   },
   "formula": {
     "tooltipNotCached": "Formel (ej cachad i filen): {{formula}}"
