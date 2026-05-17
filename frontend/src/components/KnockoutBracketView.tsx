@@ -110,6 +110,7 @@ function BracketPick({
     <select
       className={[
         'tipset-knockout__select',
+        'tipset-knockout__select--playoff',
         align === 'right' ? 'tipset-knockout__select--right' : '',
         align === 'center' ? 'tipset-knockout__select--center' : '',
       ]
@@ -189,15 +190,10 @@ export function KnockoutBracketView({
         <h2 className="tipset-knockout__title">
           {translateWorkbookString(cellLabel(cellByAddress, 'B143') || 'Slutspel', i18n)}
         </h2>
+        <p className="tipset-knockout__hint">{t('knockout.r16Hint')}</p>
       </div>
 
-      <div
-        className="tipset-knockout__grid"
-        style={{
-          gridTemplateColumns: 'minmax(5.5rem, 1fr) minmax(5.5rem, 1fr) minmax(5.5rem, 1fr) minmax(5.5rem, 1fr) minmax(6rem, 1.1fr) minmax(5.5rem, 1fr) minmax(5.5rem, 1fr) minmax(5.5rem, 1fr) minmax(5.5rem, 1fr)',
-          gridTemplateRows: 'repeat(16, minmax(1.55rem, auto))',
-        }}
-      >
+      <div className="tipset-knockout__grid">
         {headerAddrs.map(([titleAddr, ptsAddr], i) => (
           <div
             key={titleAddr}
@@ -217,7 +213,7 @@ export function KnockoutBracketView({
           <div
             key={it.address}
             className="tipset-knockout__cell"
-            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'start' }}
+            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'stretch' }}
           >
             <BracketPick
               address={it.address}
@@ -232,7 +228,7 @@ export function KnockoutBracketView({
           <div
             key={it.address}
             className="tipset-knockout__cell"
-            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'start' }}
+            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'stretch' }}
           >
             <BracketPick address={it.address} ctx={ctx} align="left" i18n={i18n} onBracketDraft={onBracketDraft} />
           </div>
@@ -241,7 +237,7 @@ export function KnockoutBracketView({
           <div
             key={it.address}
             className="tipset-knockout__cell"
-            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'start' }}
+            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'stretch' }}
           >
             <BracketPick address={it.address} ctx={ctx} align="left" i18n={i18n} onBracketDraft={onBracketDraft} />
           </div>
@@ -270,7 +266,7 @@ export function KnockoutBracketView({
           <div
             key={it.address}
             className="tipset-knockout__cell"
-            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'end' }}
+            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'stretch' }}
           >
             <BracketPick address={it.address} ctx={ctx} align="right" i18n={i18n} onBracketDraft={onBracketDraft} />
           </div>
@@ -279,7 +275,7 @@ export function KnockoutBracketView({
           <div
             key={it.address}
             className="tipset-knockout__cell"
-            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'end' }}
+            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'stretch' }}
           >
             <BracketPick address={it.address} ctx={ctx} align="right" i18n={i18n} onBracketDraft={onBracketDraft} />
           </div>
@@ -288,7 +284,7 @@ export function KnockoutBracketView({
           <div
             key={it.address}
             className="tipset-knockout__cell"
-            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'end' }}
+            style={{ gridColumn: it.col + 1, gridRow: it.row + 2, justifySelf: 'stretch' }}
           >
             <BracketPick address={it.address} ctx={ctx} align="right" i18n={i18n} onBracketDraft={onBracketDraft} />
           </div>
@@ -319,7 +315,7 @@ export function KnockoutBracketView({
             {translateWorkbookString(cellLabel(cellByAddress, 'B168'), i18n)}
           </div>
           <select
-            className="tipset-knockout__select tipset-knockout__select--wide"
+            className="tipset-knockout__select tipset-knockout__select--playoff tipset-knockout__select--wide"
             aria-label="B169"
             value={b169Select}
             onChange={(e) => onBracketDraft('B169', e.target.value)}
@@ -356,7 +352,7 @@ export function KnockoutBracketView({
             {translateWorkbookString(cellLabel(cellByAddress, 'B173'), i18n)}
           </div>
           <select
-            className="tipset-knockout__select tipset-knockout__select--wide"
+            className="tipset-knockout__select tipset-knockout__select--playoff tipset-knockout__select--wide"
             aria-label="B174"
             value={b174Select}
             onChange={(e) => onBracketDraft('B174', e.target.value)}

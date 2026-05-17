@@ -93,39 +93,74 @@ function participantsFromR32(
   return { home: h, away: a };
 }
 
-/** Single predicted winner from 0–9 scores, or `null` if unknown / draw / missing. */
-export function predictedR32Winner(matchId: string, ctx: BracketResolveCtx): string | null {
-  const row = excelRowForR32Match(matchId);
-  if (row === null) return null;
-  const pick = matchPickFromRow(row, ctx.cellByAddress, ctx.scoreDrafts);
-  const { home, away } = participantsFromR32(matchId, ctx);
-  if (pick === 'home') return home;
-  if (pick === 'away') return away;
+function standingRowForTeamName(
+  tables: Map<string, StandingRow[] | null>,
+  teamName: string,
+): StandingRow | null {
+  const needle = teamName.trim();
+  if (!needle) return null;
+  for (const rows of tables.values()) {
+    if (!rows) continue;
+    const hit = rows.find((r) => r.name.trim() === needle);
+    if (hit) return hit;
+  }
   return null;
 }
 
-function r16CandidatePool(matchId: string, ctx: BracketResolveCtx): string[] {
-  const w = predictedR32Winner(matchId, ctx);
-  if (w) return [w];
-  const { home, away } = participantsFromR32(matchId, ctx);
-  const out: string[] = [];
-  if (home) out.push(home);
-  if (away) out.push(away);
-  return out;
+/**
+ * When R32 score cells are not used (mall shows "―" in C), pick the winner from predicted
+ * group-stage points, then goal difference, then goals scored; stable name order as last tiebreak.
+ */
+function r32WinnerFromStandingsWhenNoScorePick(
+  homeName: string | null,
+  awayName: string | null,
+  tables: Map<string, StandingRow[] | null>,
+): string | null {
+  if (!homeName || !awayName) return null;
+  const h = standingRowForTeamName(tables, homeName);
+  const a = standingRowForTeamName(tables, awayName);
+  if (!h || !a) return null;
+  if (h.pts !== a.pts) return h.pts > a.pts ? homeName : awayName;
+  if (h.gd !== a.gd) return h.gd > a.gd ? homeName : awayName;
+  if (h.gf !== a.gf) return h.gf > a.gf ? homeName : awayName;
+  return homeName.localeCompare(awayName, 'sv') <= 0 ? homeName : awayName;
 }
 
-/** Teams the user can choose among for this R16 cell (union of two feeder R32 paths). */
+/**
+ * Predicted R32 winner: explicit C/E goals when the mall exposes 0–9 lists on that row;
+ * otherwise inferred from group-stage tables (VM-tipset mall uses "―" in column C for R32).
+ */
+export function predictedR32Winner(matchId: string, ctx: BracketResolveCtx): string | null {
+  const row = excelRowForR32Match(matchId);
+  if (row === null) return null;
+  const { home, away } = participantsFromR32(matchId, ctx);
+
+  const pick = matchPickFromRow(row, ctx.cellByAddress, ctx.scoreDrafts);
+  if (pick === 'home') return home;
+  if (pick === 'away') return away;
+  if (pick === 'draw') return null;
+
+  return r32WinnerFromStandingsWhenNoScorePick(home, away, ctx.standingTables);
+}
+
+/**
+ * Åttondelsfinal: each cell is winner(Ma) vs winner(Mb). Options are the two predicted R32
+ * winners (scores on the R32 row if present, else inferred from group-stage tables).
+ */
 export function r16SelectOptions(address: string, ctx: BracketResolveCtx): string[] {
   const n = normalizeBracketAddress(address);
   const pair = R16_PAIR_BY_ADDRESS[n];
   if (!pair) return [];
-  const u = new Set<string>();
-  for (const m of pair) {
-    for (const t of r16CandidatePool(m, ctx)) {
-      u.add(t);
-    }
+  const [m1, m2] = pair;
+  const w1 = predictedR32Winner(m1, ctx);
+  const w2 = predictedR32Winner(m2, ctx);
+  if (!w1 || !w2) {
+    return [];
   }
-  return [...u];
+  if (w1 === w2) {
+    return [w1];
+  }
+  return [w1, w2];
 }
 
 function qfSelectOptions(address: string, ctx: BracketResolveCtx, memo: Map<string, string[]>): string[] {

@@ -22,6 +22,7 @@
     "playerEmail": "Din e-postadress"
   },
   "knockout": {
-    "sectionAria": "Slutspelstips"
+    "sectionAria": "Slutspelstips",
+    "r16Hint": "Varje åttondelsfinal är vinnaren av en 32-delsfinal mot vinnaren av en annan (enligt fifaplan). Mallens 32-delsrader har inga målceller: när gruppspelet är ifyllt räknar vi fram vinnare via poäng, målskillnad och gjorda mål (sedan bokstavsordning). Där lottningen kräver trea måste de åtta bästa treorna vara uträknade."
   }
 }

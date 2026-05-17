@@ -22,6 +22,7 @@
     "playerEmail": "Your email address"
   },
   "knockout": {
-    "sectionAria": "Knockout bracket predictions"
+    "sectionAria": "Knockout bracket predictions",
+    "r16Hint": "Each Round of 16 pick is the winner from one 32nd-final against the winner from another (FIFA bracket paths). Round-of-32 rows in the mall have no score cells: after you fill the group stage, we infer each 32nd-final winner from group points, goal difference, and goals scored (then alphabetical tiebreak). Third-place qualifiers must be resolved where the draw uses them."
   }
 }

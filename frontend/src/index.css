@@ -732,6 +732,7 @@ code {
 
 /* --- Knockout bracket (VM-tipset slutspel) -------------------------------- */
 .tipset-knockout {
+  --tipset-knockout-pick-w: 15.75rem;
   margin-top: 6px;
   padding: 10px 12px 12px;
   border-radius: 10px;
@@ -740,8 +741,12 @@ code {
   box-shadow: 0 1px 8px rgba(47, 85, 151, 0.08);
 }
 
-.tipset-knockout__banner {
-  margin-bottom: 8px;
+.tipset-knockout__hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--tipset-text-muted);
+  max-width: 62rem;
 }
 
 .tipset-knockout__title {
@@ -761,6 +766,8 @@ code {
   padding-bottom: 6px;
   border-bottom: 1px dashed rgba(47, 85, 151, 0.18);
   margin-bottom: 10px;
+  grid-template-columns: repeat(9, var(--tipset-knockout-pick-w));
+  grid-template-rows: repeat(16, minmax(1.55rem, auto));
 }
 
 .tipset-knockout__head {
@@ -792,14 +799,26 @@ code {
 
 .tipset-knockout__cell--finalist .tipset-knockout__select,
 .tipset-knockout__cell--champion .tipset-knockout__select {
-  width: 100%;
-  max-width: none;
   font-weight: 650;
 }
 
 .tipset-knockout__cell--champion .tipset-knockout__select {
   outline: 2px solid rgba(230, 126, 34, 0.55);
   outline-offset: 1px;
+}
+
+.tipset-knockout__select--playoff {
+  box-sizing: border-box;
+  width: var(--tipset-knockout-pick-w);
+  min-width: var(--tipset-knockout-pick-w);
+  max-width: var(--tipset-knockout-pick-w);
+}
+
+/* Full-width picks: drop edge alignment margins from the generic select modifiers */
+.tipset-knockout__select--playoff.tipset-knockout__select--right,
+.tipset-knockout__select--playoff.tipset-knockout__select--center {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .tipset-knockout__select {
@@ -830,8 +849,9 @@ code {
 }
 
 .tipset-knockout__select--wide {
-  width: 100%;
-  max-width: 18rem;
+  width: var(--tipset-knockout-pick-w);
+  min-width: var(--tipset-knockout-pick-w);
+  max-width: var(--tipset-knockout-pick-w);
 }
 
 .tipset-knockout__select:focus {
@@ -873,6 +893,10 @@ code {
   align-items: center;
 }
 
+.tipset-knockout__bronze-picks .tipset-knockout__select--playoff {
+  flex: 0 0 auto;
+}
+
 .tipset-knockout__extras {
   display: flex;
   flex-wrap: wrap;
@@ -884,7 +908,9 @@ code {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: min(100%, 14rem);
+  width: var(--tipset-knockout-pick-w);
+  min-width: var(--tipset-knockout-pick-w);
+  max-width: var(--tipset-knockout-pick-w);
 }
 
 .tipset-knockout__extra-pts {
@@ -907,8 +933,10 @@ code {
 
 .tipset-knockout__text {
   display: block;
-  width: 100%;
-  max-width: 18rem;
+  width: var(--tipset-knockout-pick-w);
+  min-width: var(--tipset-knockout-pick-w);
+  max-width: var(--tipset-knockout-pick-w);
+  box-sizing: border-box;
   padding: 4px 8px;
   border: 1px solid #1a1a1a;
   border-radius: 2px;
