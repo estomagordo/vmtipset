@@ -7,15 +7,22 @@ import {
   resolveStandingsCellAtAddress,
   type StandingRow,
 } from '../lib/groupStandings';
-import { GROUP_STAGE_BLOCKS } from '../config/groupStageBlocks';
+import {
+  GROUP_STAGE_BLOCKS,
+  GROUP_STAGE_BLOCK_DATA_ROWS,
+  GROUP_STAGE_FIRST_HEADER_GRID_INDEX,
+  GROUP_STAGE_ROW_STRIDE,
+  groupStageFooterStartGridIndex,
+} from '../config/groupStageBlocks';
 import {
   getScoreSelectValue,
   isScoreDigitListValidation,
   SCORE_OPTION_VALUES,
 } from '../lib/scoreCells';
-import { lettersToColIndex } from '../lib/excelAddress';
 import { translateWorkbookString } from '../i18n/workbookStrings';
 import { isMetaFreeTextCell } from '../lib/metaTextFields';
+import { classifyGroupGridCell, GROUP_TABLE_COL_CLASSES } from '../lib/groupGridStyle';
+import { lettersToColIndex } from '../lib/excelAddress';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -25,13 +32,17 @@ export type SpreadsheetViewProps = {
   cellByAddress: Map<string, WorkbookCell>;
 };
 
-/** 1-based inclusive column range K–S (standings block in the mall). */
-const STANDINGS_COL_START = lettersToColIndex('K');
-const STANDINGS_COL_END = lettersToColIndex('S');
-
 function normalizeCellAddress(address: string): string {
   return address.trim().toUpperCase().replace(/\$/g, '');
 }
+
+const GROUP_COLGROUP = (
+  <colgroup>
+    {GROUP_TABLE_COL_CLASSES.map((cls, i) => (
+      <col key={i} className={cls} />
+    ))}
+  </colgroup>
+);
 
 type CellBodyProps = {
   address: string;
@@ -172,6 +183,100 @@ function CellBody({
   return null;
 }
 
+const COL_B = lettersToColIndex('B');
+const COL_E = lettersToColIndex('E');
+const COL_F = lettersToColIndex('F');
+const COL_K = lettersToColIndex('K');
+
+type GroupRowCtx = { blockHeaderExcelRow: number; rowInBlock: number };
+
+type SheetRowProps = {
+  row: GridCell[];
+  rowIndex0: number;
+  groupCtx: GroupRowCtx | null;
+  scoreDrafts: Record<string, string>;
+  metaDrafts: Record<string, string>;
+  onMetaDraft: (normalizedAddress: string, value: string) => void;
+  onScoreDraft: (address: string, value: string) => void;
+  standingTables: Map<string, StandingRow[] | null>;
+};
+
+function SheetRow({
+  row,
+  rowIndex0,
+  groupCtx,
+  scoreDrafts,
+  metaDrafts,
+  onMetaDraft,
+  onScoreDraft,
+  standingTables,
+}: SheetRowProps) {
+  const excelRow = rowIndex0 + 1;
+  const isMetaBlockRow = excelRow < 10;
+
+  return (
+    <tr aria-rowindex={excelRow} className={isMetaBlockRow ? 'tipset-row--meta' : undefined}>
+      {row.map((cell: GridCell, columnIndex) => {
+        if (cell.kind === 'skip') return null;
+        const entry = cell.entry;
+        const gridCol = columnIndex + 1;
+        const addrNorm = normalizeCellAddress(cell.address);
+        const isMetaTextField = isMetaFreeTextCell(addrNorm);
+        const hasListValidation = entry?.validation?.type === 'list';
+        const isFormula = entry?.kind === 'formula';
+
+        const groupMods =
+          groupCtx == null
+            ? []
+            : classifyGroupGridCell(gridCol, excelRow, groupCtx.blockHeaderExcelRow, groupCtx.rowInBlock);
+
+        const isPredTeamCol = Boolean(
+          groupCtx && groupCtx.rowInBlock >= 1 && (gridCol === COL_B || gridCol === COL_F),
+        );
+        const isStatNameCol = Boolean(groupCtx && gridCol === COL_K && groupCtx.rowInBlock >= 1);
+        const awayScorePad = Boolean(groupCtx && gridCol === COL_E);
+        const afterAwayScore = Boolean(groupCtx && gridCol === COL_F);
+
+        const className = [
+          'tipset-cell',
+          ...groupMods,
+          entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
+            ? 'tipset-align-right'
+            : 'tipset-align-left',
+          hasListValidation || isMetaTextField ? 'tipset-cell--input' : '',
+          isPredTeamCol ? 'tipset-cell--pred-team' : '',
+          isStatNameCol ? 'tipset-cell--stat-name' : '',
+          awayScorePad ? 'tipset-cell--away-score-pad' : '',
+          afterAwayScore ? 'tipset-cell--after-away-score' : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        return (
+          <td
+            key={cell.address}
+            className={className}
+            rowSpan={cell.rowSpan}
+            colSpan={cell.colSpan}
+            data-address={cell.address}
+            aria-colindex={gridCol}
+          >
+            <CellBody
+              address={cell.address}
+              entry={entry}
+              scoreDrafts={scoreDrafts}
+              metaDrafts={metaDrafts}
+              onMetaDraft={onMetaDraft}
+              onScoreDraft={onScoreDraft}
+              standingTables={standingTables}
+            />
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
 export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress }: SpreadsheetViewProps) {
   const { t } = useTranslation('app');
   const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
@@ -190,6 +295,18 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
     [cellByAddress, scoreDrafts],
   );
 
+  const preambleRows = grid.slice(0, GROUP_STAGE_FIRST_HEADER_GRID_INDEX);
+  const footerStart = groupStageFooterStartGridIndex();
+  const footerRows = footerStart < grid.length ? grid.slice(footerStart) : [];
+
+  const sharedRowProps = {
+    scoreDrafts,
+    metaDrafts,
+    onMetaDraft,
+    onScoreDraft,
+    standingTables,
+  };
+
   return (
     <div className="tipset-shell">
       <header className="tipset-header">
@@ -199,69 +316,71 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
 
       <div className="tipset-scroll">
         <div className="tipset-table-wrap">
-          <table
-            className="tipset-table"
-            role="grid"
-            aria-label={title}
-            aria-rowcount={rowCount}
-            aria-colcount={colCount}
-          >
-            <tbody>
-              {grid.map((row, rowIndex) => {
-                const excelRow = rowIndex + 1;
-                const isMetaBlockRow = excelRow < 10;
-                return (
-                  <tr
-                    key={rowIndex}
-                    aria-rowindex={excelRow}
-                    className={isMetaBlockRow ? 'tipset-row--meta' : undefined}
-                  >
-                    {row.map((cell: GridCell, columnIndex) => {
-                      if (cell.kind === 'skip') return null;
-                      const entry = cell.entry;
-                      const gridCol = columnIndex + 1;
-                      const addrNorm = normalizeCellAddress(cell.address);
-                      const isMetaTextField = isMetaFreeTextCell(addrNorm);
-                      const isStandingsColumn =
-                        gridCol >= STANDINGS_COL_START && gridCol <= STANDINGS_COL_END;
-                      const hasListValidation = entry?.validation?.type === 'list';
-                      const isFormula = entry?.kind === 'formula';
-                      const className = [
-                        'tipset-cell',
-                        entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
-                          ? 'tipset-align-right'
-                          : 'tipset-align-left',
-                        isStandingsColumn ? 'tipset-cell--standings' : '',
-                        hasListValidation || isMetaTextField ? 'tipset-cell--input' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ');
-                      return (
-                        <td
-                          key={cell.address}
-                          className={className}
-                          rowSpan={cell.rowSpan}
-                          colSpan={cell.colSpan}
-                          data-address={cell.address}
-                          aria-colindex={gridCol}
-                        >
-                          <CellBody
-                            address={cell.address}
-                            entry={entry}
-                            scoreDrafts={scoreDrafts}
-                            metaDrafts={metaDrafts}
-                            onMetaDraft={onMetaDraft}
-                            onScoreDraft={onScoreDraft}
-                            standingTables={standingTables}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="tipset-stack">
+            <table
+              className="tipset-table tipset-table--plain"
+              role="grid"
+              aria-label={title}
+              aria-rowcount={rowCount}
+              aria-colcount={colCount}
+            >
+              <tbody>
+                {preambleRows.map((row, i) => (
+                  <SheetRow
+                    key={i}
+                    row={row}
+                    rowIndex0={i}
+                    groupCtx={null}
+                    {...sharedRowProps}
+                  />
+                ))}
+              </tbody>
+            </table>
+
+            {GROUP_STAGE_BLOCKS.map((block, gIdx) => {
+              const from = GROUP_STAGE_FIRST_HEADER_GRID_INDEX + gIdx * GROUP_STAGE_ROW_STRIDE;
+              const blockRows = grid.slice(from, from + GROUP_STAGE_BLOCK_DATA_ROWS);
+              const blockHeaderExcelRow = block.startRow - 1;
+              return (
+                <section
+                  key={block.id}
+                  className="tipset-group-card"
+                  aria-label={block.id}
+                >
+                  <table className="tipset-table" role="grid">
+                    {GROUP_COLGROUP}
+                    <tbody>
+                      {blockRows.map((row, i) => (
+                        <SheetRow
+                          key={from + i}
+                          row={row}
+                          rowIndex0={from + i}
+                          groupCtx={{ blockHeaderExcelRow, rowInBlock: i }}
+                          {...sharedRowProps}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
+              );
+            })}
+
+            {footerRows.length > 0 && (
+              <table className="tipset-table tipset-table--plain tipset-footer-table" role="grid">
+                <tbody>
+                  {footerRows.map((row, i) => (
+                    <SheetRow
+                      key={footerStart + i}
+                      row={row}
+                      rowIndex0={footerStart + i}
+                      groupCtx={null}
+                      {...sharedRowProps}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       </div>
     </div>
