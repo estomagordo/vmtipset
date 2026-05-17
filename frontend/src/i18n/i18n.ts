@@ -3,27 +3,27 @@ import { initReactI18next } from 'react-i18next';
 
 import appEn from './locales/en/app.json';
 import appSv from './locales/sv/app.json';
-import entitiesEn from './locales/en/entities.json';
-import entitiesSv from './locales/sv/entities.json';
+import workbookLabelsEn from './locales/en/workbookLabels.json';
+import workbookLabelsSv from './locales/sv/workbookLabels.json';
 
 /**
  * i18n setup for the SPA.
  *
  * - Default locale: Swedish (`sv`), fallback: English (`en`).
- * - `app`: chrome strings (errors, hints, spreadsheet blurb).
- * - `entities`: domain catalog (countries, etc.). Use stable ids (e.g. ISO codes) as JSON keys.
+ * - `app`: chrome (errors, hints, spreadsheet blurb).
+ * - `workbookLabels`: all strings extracted from the Excel-backed dump (+ sheet title); regenerate via
+ *   `python tools/generate_workbook_labels.py`.
  *
- * To switch language in code (e.g. future settings UI): `import i18n from './i18n/i18n'; i18n.changeLanguage('en')`.
- * `document.documentElement.lang` is updated on init and when the language changes.
+ * To switch language: `import i18n from './i18n/i18n'; i18n.changeLanguage('en')`.
  */
 void i18n.use(initReactI18next).init({
   lng: 'sv',
   fallbackLng: 'en',
   defaultNS: 'app',
-  ns: ['app', 'entities'],
+  ns: ['app', 'workbookLabels'],
   resources: {
-    sv: { app: appSv, entities: entitiesSv },
-    en: { app: appEn, entities: entitiesEn },
+    sv: { app: appSv, workbookLabels: workbookLabelsSv },
+    en: { app: appEn, workbookLabels: workbookLabelsEn },
   },
   interpolation: {
     escapeValue: true,

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:workbook-labels": "cd .. && python tools/generate_workbook_labels.py"
   },
   "dependencies": {
     "i18next": "^26.2.0",

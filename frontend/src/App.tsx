@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SpreadsheetView } from './components/SpreadsheetView';
+import { translateWorkbookString } from './i18n/workbookStrings';
 import { buildGridFromDump } from './lib/gridModel';
 import type { WorkbookDump } from './types/workbook';
 
 export default function App() {
-  const { t } = useTranslation('app');
+  const { t, i18n } = useTranslation('app');
   const [dump, setDump] = useState<WorkbookDump | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +49,8 @@ export default function App() {
     );
   }
 
-  const sheetTitle = dump.sheets[0]?.name ?? t('meta.defaultSheetTitle');
+  const rawSheetTitle = dump.sheets[0]?.name ?? t('meta.defaultSheetTitle');
+  const sheetTitle = translateWorkbookString(rawSheetTitle, i18n);
 
   return (
     <div className="excel-app">
