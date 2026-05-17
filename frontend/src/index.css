@@ -623,6 +623,11 @@ body {
   text-align: left;
 }
 
+/* Total score (G8): same column as inputs; left-aligned with inputs, not sheet numeric flush-right. */
+.tipset-row--meta .tipset-cell--meta-score .tipset-cell-num {
+  max-width: 16rem;
+}
+
 /* Cell stays sheet-coloured; yellow is only on <input> / <select>. */
 .tipset-cell--input {
   background: transparent;

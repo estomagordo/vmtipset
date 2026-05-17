@@ -322,6 +322,8 @@ function SheetRow({
         const gridCol = columnIndex + 1;
         const isFirstVisible = firstVisibleColIndex >= 0 && columnIndex === firstVisibleColIndex;
         const addrNorm = normalizeCellAddress(cell.address);
+        const isMetaScoreCell = isMetaBlockRow && excelRow === 8 && addrNorm === 'G8';
+
         const isMetaTextField = isMetaFreeTextCell(addrNorm);
         const hasListValidation = entry?.validation?.type === 'list';
         const isFormula = entry?.kind === 'formula';
@@ -362,7 +364,9 @@ function SheetRow({
         );
         const alignNum =
           entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number');
-        const alignClass = is1x2Col
+        const alignClass = isMetaScoreCell
+          ? 'tipset-align-left'
+          : is1x2Col
           ? 'tipset-align-center'
           : b3Header && gridCol === COL_J
             ? 'tipset-align-center'
@@ -412,6 +416,7 @@ function SheetRow({
           'tipset-cell',
           ...groupMods,
           alignClass,
+          isMetaScoreCell ? 'tipset-cell--meta-score' : '',
           hasListValidation || isMetaTextField ? 'tipset-cell--input' : '',
           isPredTeamCol || isRoundOf32TeamCol ? 'tipset-cell--pred-team' : '',
           isStatNameCol ? 'tipset-cell--stat-name' : '',
