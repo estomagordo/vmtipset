@@ -68,6 +68,51 @@ function teamNameFromFixtureCell(entry: WorkbookCell | undefined): string | null
   return null;
 }
 
+function readIntFromWorkbookCell(entry: WorkbookCell | undefined): number {
+  if (!entry) return 0;
+  const raw =
+    entry.cached_value !== undefined && entry.cached_value !== null
+      ? entry.cached_value
+      : entry.value;
+  if (raw === undefined || raw === null || raw === '') return 0;
+  const n = typeof raw === 'number' ? raw : parseInt(String(raw).trim(), 10);
+  if (Number.isNaN(n)) return 0;
+  return Math.trunc(n);
+}
+
+function readStandingLineNameFromCell(entry: WorkbookCell | undefined): string {
+  if (!entry) return '';
+  const raw =
+    entry.cached_value !== undefined && entry.cached_value !== null && entry.cached_value !== ''
+      ? entry.cached_value
+      : entry.value;
+  if (raw === undefined || raw === null || raw === '') return '';
+  return String(raw).trim();
+}
+
+/**
+ * One K–S standings row from the mall (`value` or formula `cached_value`), e.g. template tables
+ * before any predicted scores exist.
+ */
+export function readStandingRowFromWorkbook(
+  cellByAddress: Map<string, WorkbookCell>,
+  excelRow: number,
+): StandingRow | null {
+  const name = readStandingLineNameFromCell(cellByAddress.get(`K${excelRow}`));
+  if (!name) return null;
+  return {
+    name,
+    played: readIntFromWorkbookCell(cellByAddress.get(`L${excelRow}`)),
+    wins: readIntFromWorkbookCell(cellByAddress.get(`M${excelRow}`)),
+    draws: readIntFromWorkbookCell(cellByAddress.get(`N${excelRow}`)),
+    losses: readIntFromWorkbookCell(cellByAddress.get(`O${excelRow}`)),
+    gf: readIntFromWorkbookCell(cellByAddress.get(`P${excelRow}`)),
+    ga: readIntFromWorkbookCell(cellByAddress.get(`Q${excelRow}`)),
+    gd: readIntFromWorkbookCell(cellByAddress.get(`R${excelRow}`)),
+    pts: readIntFromWorkbookCell(cellByAddress.get(`S${excelRow}`)),
+  };
+}
+
 /**
  * User prediction for goals: `null` if the score is blank (not played / not entered).
  * Zero is a valid score; do not treat empty string as 0.
@@ -87,7 +132,8 @@ function readPredictedGoals(
 
 type TeamAgg = { p: number; w: number; d: number; l: number; gf: number; ga: number };
 
-function compareStandings(a: StandingRow, b: StandingRow): number {
+/** Tie order for group tables and “best third place” ranking. */
+export function compareStandings(a: StandingRow, b: StandingRow): number {
   if (b.pts !== a.pts) return b.pts - a.pts;
   if (b.gd !== a.gd) return b.gd - a.gd;
   if (b.gf !== a.gf) return b.gf - a.gf;

@@ -21,6 +21,9 @@
   --tipset-group-t3-bg: #7cace0;
   --tipset-group-t4-bg: #a8c8ed;
 
+  --tipset-b3-top8-bg: #b8d4f0;
+  --tipset-b3-rest-bg: #ced4dc;
+
   --tipset-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -133,6 +136,11 @@ body {
 
 .tipset-footer-table {
   margin-top: 2px;
+  table-layout: fixed;
+}
+
+.tipset-footer-table col {
+  min-width: 0;
 }
 
 .tipset-group-stage {
@@ -430,6 +438,36 @@ body {
 
 .tipset-cell--input .tipset-select--in-cell {
   background: var(--tipset-input-bg);
+}
+
+.tipset-footer-table .tipset-b3__header {
+  background: var(--tipset-group-header-bg);
+  color: var(--tipset-group-header-fg);
+  font-weight: 650;
+}
+
+.tipset-footer-table .tipset-b3__header .tipset-cell-text,
+.tipset-footer-table .tipset-b3__header .tipset-cell-num {
+  color: var(--tipset-group-header-fg);
+}
+
+.tipset-footer-table .tipset-b3__cell--top8 {
+  background: var(--tipset-b3-top8-bg);
+}
+
+.tipset-footer-table .tipset-b3__cell--rest {
+  background: var(--tipset-b3-rest-bg);
+}
+
+/* With colgroup %, stats share width; only tweak padding. */
+.tipset-footer-table td.tipset-b3__stat-col {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.tipset-footer-table td.tipset-b3__rank-col {
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .tipset-error-hint {

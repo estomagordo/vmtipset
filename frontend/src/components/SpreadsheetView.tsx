@@ -21,6 +21,14 @@ import {
 } from '../lib/scoreCells';
 import { translateWorkbookString } from '../i18n/workbookStrings';
 import { isMetaFreeTextCell } from '../lib/metaTextFields';
+import {
+  bestThirdPlaceDataRowIndex,
+  computeBestThirdPlaceTable,
+  getBestThirdPlaceCellValue,
+  isBestThirdPlaceDataCell,
+  isBestThirdPlaceHeaderCell,
+  type BestThirdPlaceRow,
+} from '../lib/bestThirdPlace';
 import { classifyGroupGridCell, GROUP_COL_WIDTH_PCT, GROUP_TABLE_COL_CLASSES } from '../lib/groupGridStyle';
 import { matchPickFromRow } from '../lib/match1x2';
 import { lettersToColIndex } from '../lib/excelAddress';
@@ -62,6 +70,7 @@ type CellBodyProps = {
   onMetaDraft: (normalizedAddress: string, value: string) => void;
   onScoreDraft: (address: string, value: string) => void;
   standingTables: Map<string, StandingRow[] | null>;
+  bestThirdPlaceRows: BestThirdPlaceRow[] | null;
 };
 
 function CellBody({
@@ -76,6 +85,7 @@ function CellBody({
   onMetaDraft,
   onScoreDraft,
   standingTables,
+  bestThirdPlaceRows,
 }: CellBodyProps) {
   const { t, i18n } = useTranslation('app');
   const key = normalizeCellAddress(address);
@@ -94,6 +104,18 @@ function CellBody({
       return <span className="tipset-x-marker">X</span>;
     }
     return <span className="tipset-cell-1x2-empty">{'\u00a0'}</span>;
+  }
+
+  if (bestThirdPlaceRows && isBestThirdPlaceDataCell(excelRow, gridCol)) {
+    const raw = getBestThirdPlaceCellValue(excelRow, gridCol, bestThirdPlaceRows);
+    if (raw === null) {
+      return <span className="tipset-cell-text">{'\u00a0'}</span>;
+    }
+    if (typeof raw === 'number') {
+      return <span className="tipset-cell-num">{String(raw)}</span>;
+    }
+    const text = translateWorkbookString(raw, i18n);
+    return <span className="tipset-cell-text">{text}</span>;
   }
 
   if (isMetaFreeTextCell(key)) {
@@ -219,7 +241,9 @@ const COL_D = lettersToColIndex('D');
 const COL_E = lettersToColIndex('E');
 const COL_F = lettersToColIndex('F');
 const COL_K = lettersToColIndex('K');
+const COL_J = lettersToColIndex('J');
 const COL_L = lettersToColIndex('L');
+const COL_S = lettersToColIndex('S');
 const COL_T = lettersToColIndex('T');
 
 type SheetRowProps = {
@@ -232,6 +256,7 @@ type SheetRowProps = {
   onMetaDraft: (normalizedAddress: string, value: string) => void;
   onScoreDraft: (address: string, value: string) => void;
   standingTables: Map<string, StandingRow[] | null>;
+  bestThirdPlaceRows: BestThirdPlaceRow[] | null;
 };
 
 function SheetRow({
@@ -244,6 +269,7 @@ function SheetRow({
   onMetaDraft,
   onScoreDraft,
   standingTables,
+  bestThirdPlaceRows,
 }: SheetRowProps) {
   const excelRow = rowIndex0 + 1;
   const isMetaBlockRow = excelRow < 10;
@@ -271,6 +297,10 @@ function SheetRow({
         const awayScorePad = Boolean(groupCtx && gridCol === COL_E);
         const afterAwayScore = Boolean(groupCtx && gridCol === COL_F);
 
+        const b3Idx = bestThirdPlaceDataRowIndex(excelRow);
+        const b3Header = isBestThirdPlaceHeaderCell(excelRow, gridCol);
+        const b3HasRow = Boolean(b3Idx !== null && bestThirdPlaceRows && bestThirdPlaceRows[b3Idx]);
+
         const is1x2Col = Boolean(groupCtx && gridCol >= COL_G && gridCol <= COL_I);
         const isGroupDashCol = Boolean(groupCtx && gridCol === COL_D);
         const isGroupStatHeaderNumCol = Boolean(
@@ -287,15 +317,39 @@ function SheetRow({
           entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number');
         const alignClass = is1x2Col
           ? 'tipset-align-center'
-          : isGroupDashCol
-            ? 'tipset-align-center'
-            : isGroupStatHeaderNumCol
-              ? 'tipset-align-right'
-              : isGroupScoreCol
+          : b3Header && gridCol >= COL_L && gridCol <= COL_S
+            ? 'tipset-align-right'
+            : b3Header && gridCol === COL_K
+              ? 'tipset-align-left'
+              : b3HasRow && gridCol === COL_J
                 ? 'tipset-align-right'
-                : alignNum
+                : b3HasRow && gridCol >= COL_L && gridCol <= COL_S
                   ? 'tipset-align-right'
-                  : 'tipset-align-left';
+                  : b3HasRow && gridCol === COL_K
+                    ? 'tipset-align-left'
+                    : isGroupDashCol
+                      ? 'tipset-align-center'
+                      : isGroupStatHeaderNumCol
+                        ? 'tipset-align-right'
+                        : isGroupScoreCol
+                          ? 'tipset-align-right'
+                          : alignNum
+                            ? 'tipset-align-right'
+                            : 'tipset-align-left';
+
+        const b3StatCol = Boolean(
+          (b3Header && gridCol >= COL_L && gridCol <= COL_S) ||
+            (b3Idx !== null && gridCol >= COL_L && gridCol <= COL_S),
+        );
+        const b3RankCol = Boolean(b3Idx !== null && gridCol === COL_J);
+
+        let b3Tier = '';
+        if (b3Idx !== null && bestThirdPlaceRows && gridCol >= COL_J && gridCol <= COL_S) {
+          const br = bestThirdPlaceRows[b3Idx];
+          if (br) {
+            b3Tier = br.rank <= 8 ? 'tipset-b3__cell--top8' : 'tipset-b3__cell--rest';
+          }
+        }
 
         const className = [
           'tipset-cell',
@@ -306,6 +360,10 @@ function SheetRow({
           isStatNameCol ? 'tipset-cell--stat-name' : '',
           awayScorePad ? 'tipset-cell--away-score-pad' : '',
           afterAwayScore ? 'tipset-cell--after-away-score' : '',
+          b3Header ? 'tipset-b3__header' : '',
+          b3StatCol ? 'tipset-b3__stat-col' : '',
+          b3RankCol ? 'tipset-b3__rank-col' : '',
+          b3Tier,
         ]
           .filter(Boolean)
           .join(' ');
@@ -331,6 +389,7 @@ function SheetRow({
               onMetaDraft={onMetaDraft}
               onScoreDraft={onScoreDraft}
               standingTables={standingTables}
+              bestThirdPlaceRows={bestThirdPlaceRows}
             />
           </td>
         );
@@ -357,6 +416,11 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
     [cellByAddress, scoreDrafts],
   );
 
+  const bestThirdPlaceRows = useMemo(
+    () => computeBestThirdPlaceTable(standingTables, cellByAddress),
+    [standingTables, cellByAddress],
+  );
+
   const preambleRows = grid.slice(0, GROUP_STAGE_FIRST_HEADER_GRID_INDEX);
   const footerStart = groupStageFooterStartGridIndex();
   const footerRows = footerStart < grid.length ? grid.slice(footerStart) : [];
@@ -368,6 +432,7 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
     onMetaDraft,
     onScoreDraft,
     standingTables,
+    bestThirdPlaceRows,
   };
 
   return (
@@ -439,6 +504,7 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
 
             {footerRows.length > 0 && (
               <table className="tipset-table tipset-table--plain tipset-footer-table" role="grid">
+                {GROUP_COLGROUP}
                 <tbody>
                   {footerRows.map((row, i) => (
                     <SheetRow
