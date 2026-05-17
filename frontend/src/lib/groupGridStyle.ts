@@ -56,6 +56,14 @@ export const GROUP_COL_WIDTH_PCT: readonly number[] = [
   7, 9, 7, 4, 7, 9, 3, 3, 3, 3, 8, 4, 4, 4, 4, 4, 4, 4, 4, 5,
 ] as const;
 
+const sumPct = (from: number, toExclusive: number) =>
+  GROUP_COL_WIDTH_PCT.slice(from, toExclusive).reduce((a, b) => a + b, 0);
+
+/** Sums of {@link GROUP_COL_WIDTH_PCT} for CSS grid tracks: A–F, G–I, J–T (each sums with others to 100). */
+export const GROUP_STAGE_GRID_MATCH_FR = sumPct(0, 6);
+export const GROUP_STAGE_GRID_X_FR = sumPct(6, 9);
+export const GROUP_STAGE_GRID_STANDINGS_FR = sumPct(9, GROUP_COL_WIDTH_PCT.length);
+
 /** Column width hints for compact match / prediction layout (A–T). */
 export const GROUP_TABLE_COL_CLASSES: readonly string[] = [
   'tipset-col--match',

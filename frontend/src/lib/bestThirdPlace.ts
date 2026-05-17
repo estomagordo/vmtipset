@@ -9,6 +9,11 @@ export const BEST_THIRD_PLACE_HEADER_ROW = 127;
 export const BEST_THIRD_PLACE_FIRST_DATA_ROW = 128;
 export const BEST_THIRD_PLACE_LAST_DATA_ROW = 139;
 
+/** 0-based grid row for Excel {@link BEST_THIRD_PLACE_HEADER_ROW}. */
+export const BEST_THIRD_PLACE_FIRST_GRID_ROW_INDEX = BEST_THIRD_PLACE_HEADER_ROW - 1;
+/** Exclusive end for `grid.slice(BEST_THIRD_PLACE_FIRST_GRID_ROW_INDEX, …)` through row 139. */
+export const BEST_THIRD_PLACE_GRID_SLICE_END_EXCLUSIVE = BEST_THIRD_PLACE_LAST_DATA_ROW;
+
 const COL_J = lettersToColIndex('J');
 const COL_K = lettersToColIndex('K');
 const COL_L = lettersToColIndex('L');
@@ -19,6 +24,7 @@ const COL_P = lettersToColIndex('P');
 const COL_Q = lettersToColIndex('Q');
 const COL_R = lettersToColIndex('R');
 const COL_S = lettersToColIndex('S');
+const COL_T = lettersToColIndex('T');
 
 export type BestThirdPlaceRow = StandingRow & { rank: number; groupLetter: string };
 
@@ -60,12 +66,12 @@ export function bestThirdPlaceDataRowIndex(excelRow: number): number | null {
 }
 
 export function isBestThirdPlaceHeaderCell(excelRow: number, gridCol: number): boolean {
-  return excelRow === BEST_THIRD_PLACE_HEADER_ROW && gridCol >= COL_K && gridCol <= COL_S;
+  return excelRow === BEST_THIRD_PLACE_HEADER_ROW && gridCol >= COL_J && gridCol <= COL_T;
 }
 
 export function isBestThirdPlaceDataCell(excelRow: number, gridCol: number): boolean {
   return (
-    bestThirdPlaceDataRowIndex(excelRow) !== null && gridCol >= COL_J && gridCol <= COL_S
+    bestThirdPlaceDataRowIndex(excelRow) !== null && gridCol >= COL_J && gridCol <= COL_T
   );
 }
 

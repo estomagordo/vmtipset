@@ -11,6 +11,11 @@ export const R32_HEADER_ROW = 109;
 export const R32_FIRST_MATCH_ROW = 110;
 export const R32_LAST_MATCH_ROW = 125;
 
+/** 0-based grid row index for Excel {@link R32_HEADER_ROW}. */
+export const R32_FIRST_GRID_ROW_INDEX = R32_HEADER_ROW - 1;
+/** Exclusive end index for `grid.slice(R32_FIRST_GRID_ROW_INDEX, …)`. */
+export const R32_GRID_SLICE_END_EXCLUSIVE = R32_LAST_MATCH_ROW;
+
 const COL_B = 2;
 const COL_F = 6;
 

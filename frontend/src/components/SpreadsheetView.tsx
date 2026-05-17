@@ -12,7 +12,6 @@ import {
   GROUP_STAGE_BLOCK_DATA_ROWS,
   GROUP_STAGE_FIRST_HEADER_GRID_INDEX,
   GROUP_STAGE_ROW_STRIDE,
-  groupStageFooterStartGridIndex,
 } from '../config/groupStageBlocks';
 import {
   getScoreSelectValue,
@@ -27,12 +26,14 @@ import {
   getBestThirdPlaceCellValue,
   isBestThirdPlaceDataCell,
   isBestThirdPlaceHeaderCell,
+  BEST_THIRD_PLACE_FIRST_GRID_ROW_INDEX,
+  BEST_THIRD_PLACE_GRID_SLICE_END_EXCLUSIVE,
   type BestThirdPlaceRow,
 } from '../lib/bestThirdPlace';
-import { classifyGroupGridCell, GROUP_COL_WIDTH_PCT, GROUP_TABLE_COL_CLASSES } from '../lib/groupGridStyle';
+import { classifyGroupGridCell, GROUP_COL_WIDTH_PCT, GROUP_TABLE_COL_CLASSES, GROUP_STAGE_GRID_MATCH_FR, GROUP_STAGE_GRID_X_FR, GROUP_STAGE_GRID_STANDINGS_FR } from '../lib/groupGridStyle';
 import { matchPickFromRow } from '../lib/match1x2';
 import { lettersToColIndex } from '../lib/excelAddress';
-import { tryRoundOf32TeamDisplay, R32_FIRST_MATCH_ROW, R32_LAST_MATCH_ROW } from '../lib/roundOf32';
+import { tryRoundOf32TeamDisplay, R32_FIRST_MATCH_ROW, R32_LAST_MATCH_ROW, R32_HEADER_ROW, R32_FIRST_GRID_ROW_INDEX, R32_GRID_SLICE_END_EXCLUSIVE } from '../lib/roundOf32';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -262,10 +263,15 @@ const COL_L = lettersToColIndex('L');
 const COL_S = lettersToColIndex('S');
 const COL_T = lettersToColIndex('T');
 
+type SheetRowVariant = 'default' | 'bestThird' | 'r32';
+
 type SheetRowProps = {
   row: GridCell[];
   rowIndex0: number;
   groupCtx: GroupRowCtx | null;
+  rowVariant?: SheetRowVariant;
+  /** Translated matchup blurb from mall column P (e.g. "2A vs 2B"); hover bubble on R32 rows. */
+  r32MatchHint?: string | null;
   cellByAddress: Map<string, WorkbookCell>;
   scoreDrafts: Record<string, string>;
   metaDrafts: Record<string, string>;
@@ -279,6 +285,8 @@ function SheetRow({
   row,
   rowIndex0,
   groupCtx,
+  rowVariant = 'default',
+  r32MatchHint = null,
   cellByAddress,
   scoreDrafts,
   metaDrafts,
@@ -289,13 +297,28 @@ function SheetRow({
 }: SheetRowProps) {
   const excelRow = rowIndex0 + 1;
   const isMetaBlockRow = excelRow < 10;
+  const firstVisibleColIndex = row.findIndex((c) => c.kind !== 'skip');
+  const isR32HintRow =
+    rowVariant === 'r32' &&
+    Boolean(r32MatchHint) &&
+    excelRow >= R32_FIRST_MATCH_ROW &&
+    excelRow <= R32_LAST_MATCH_ROW;
+
+  const trClass = [isMetaBlockRow ? 'tipset-row--meta' : '', isR32HintRow ? 'tipset-r32-match-row' : '']
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <tr aria-rowindex={excelRow} className={isMetaBlockRow ? 'tipset-row--meta' : undefined}>
+    <tr
+      aria-rowindex={excelRow}
+      className={trClass || undefined}
+      aria-describedby={isR32HintRow ? `tipset-r32-hint-${excelRow}` : undefined}
+    >
       {row.map((cell: GridCell, columnIndex) => {
         if (cell.kind === 'skip') return null;
         const entry = cell.entry;
         const gridCol = columnIndex + 1;
+        const isFirstVisible = firstVisibleColIndex >= 0 && columnIndex === firstVisibleColIndex;
         const addrNorm = normalizeCellAddress(cell.address);
         const isMetaTextField = isMetaFreeTextCell(addrNorm);
         const hasListValidation = entry?.validation?.type === 'list';
@@ -339,13 +362,15 @@ function SheetRow({
           entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number');
         const alignClass = is1x2Col
           ? 'tipset-align-center'
-          : b3Header && gridCol >= COL_L && gridCol <= COL_S
-            ? 'tipset-align-right'
-            : b3Header && gridCol === COL_K
+          : b3Header && gridCol === COL_J
+            ? 'tipset-align-center'
+            : b3Header && gridCol >= COL_L && gridCol <= COL_T
+              ? 'tipset-align-right'
+              : b3Header && gridCol === COL_K
               ? 'tipset-align-left'
               : b3HasRow && gridCol === COL_J
                 ? 'tipset-align-right'
-                : b3HasRow && gridCol >= COL_L && gridCol <= COL_S
+                : b3HasRow && gridCol >= COL_L && gridCol <= COL_T
                   ? 'tipset-align-right'
                   : b3HasRow && gridCol === COL_K
                     ? 'tipset-align-left'
@@ -360,18 +385,26 @@ function SheetRow({
                             : 'tipset-align-left';
 
         const b3StatCol = Boolean(
-          (b3Header && gridCol >= COL_L && gridCol <= COL_S) ||
+          (b3Header && gridCol >= COL_L && gridCol <= COL_T) ||
             (b3Idx !== null && gridCol >= COL_L && gridCol <= COL_S),
         );
         const b3RankCol = Boolean(b3Idx !== null && gridCol === COL_J);
 
         let b3Tier = '';
-        if (b3Idx !== null && bestThirdPlaceRows && gridCol >= COL_J && gridCol <= COL_S) {
+        if (b3Idx !== null && bestThirdPlaceRows && gridCol >= COL_J && gridCol <= COL_T) {
           const br = bestThirdPlaceRows[b3Idx];
           if (br) {
             b3Tier = br.rank <= 8 ? 'tipset-b3__cell--top8' : 'tipset-b3__cell--rest';
           }
         }
+
+        const r32Dash =
+          rowVariant === 'r32' &&
+          excelRow >= R32_FIRST_MATCH_ROW &&
+          excelRow <= R32_LAST_MATCH_ROW &&
+          gridCol === COL_C;
+
+        const showR32HintBubble = isR32HintRow && isFirstVisible && r32MatchHint;
 
         const className = [
           'tipset-cell',
@@ -386,9 +419,28 @@ function SheetRow({
           b3StatCol ? 'tipset-b3__stat-col' : '',
           b3RankCol ? 'tipset-b3__rank-col' : '',
           b3Tier,
+          r32Dash ? 'tipset-cell--r32-mid' : '',
+          showR32HintBubble ? 'tipset-r32-match-row__anchor' : '',
         ]
           .filter(Boolean)
           .join(' ');
+
+        const body = (
+          <CellBody
+            address={cell.address}
+            entry={entry}
+            excelRow={excelRow}
+            gridCol={gridCol}
+            groupCtx={groupCtx}
+            cellByAddress={cellByAddress}
+            scoreDrafts={scoreDrafts}
+            metaDrafts={metaDrafts}
+            onMetaDraft={onMetaDraft}
+            onScoreDraft={onScoreDraft}
+            standingTables={standingTables}
+            bestThirdPlaceRows={bestThirdPlaceRows}
+          />
+        );
 
         return (
           <td
@@ -399,20 +451,20 @@ function SheetRow({
             data-address={cell.address}
             aria-colindex={gridCol}
           >
-            <CellBody
-              address={cell.address}
-              entry={entry}
-              excelRow={excelRow}
-              gridCol={gridCol}
-              groupCtx={groupCtx}
-              cellByAddress={cellByAddress}
-              scoreDrafts={scoreDrafts}
-              metaDrafts={metaDrafts}
-              onMetaDraft={onMetaDraft}
-              onScoreDraft={onScoreDraft}
-              standingTables={standingTables}
-              bestThirdPlaceRows={bestThirdPlaceRows}
-            />
+            {r32Dash ? (
+              <div className="tipset-r32-scoreband">
+                <div className="tipset-r32-scoreband__pad" aria-hidden />
+                <div className="tipset-r32-scoreband__dash">{body}</div>
+                <div className="tipset-r32-scoreband__pad" aria-hidden />
+              </div>
+            ) : (
+              body
+            )}
+            {showR32HintBubble ? (
+              <span id={`tipset-r32-hint-${excelRow}`} className="tipset-r32-hint-bubble" role="tooltip">
+                {r32MatchHint}
+              </span>
+            ) : null}
           </td>
         );
       })}
@@ -421,7 +473,7 @@ function SheetRow({
 }
 
 export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress }: SpreadsheetViewProps) {
-  const { t } = useTranslation('app');
+  const { t, i18n } = useTranslation('app');
   const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
   const [metaDrafts, setMetaDrafts] = useState<Record<string, string>>({});
 
@@ -444,8 +496,31 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
   );
 
   const preambleRows = grid.slice(0, GROUP_STAGE_FIRST_HEADER_GRID_INDEX);
-  const footerStart = groupStageFooterStartGridIndex();
-  const footerRows = footerStart < grid.length ? grid.slice(footerStart) : [];
+
+  const bestThirdGridRows = useMemo(() => {
+    const from = BEST_THIRD_PLACE_FIRST_GRID_ROW_INDEX;
+    const to = Math.min(BEST_THIRD_PLACE_GRID_SLICE_END_EXCLUSIVE, grid.length);
+    if (from >= to) return [];
+    return grid.slice(from, to);
+  }, [grid]);
+
+  const r32GridRows = useMemo(() => {
+    const from = R32_FIRST_GRID_ROW_INDEX;
+    const to = Math.min(R32_GRID_SLICE_END_EXCLUSIVE, grid.length);
+    if (from >= to) return [];
+    return grid.slice(from, to);
+  }, [grid]);
+
+  const r32MatchHintForExcelRow = useCallback(
+    (excelRow: number): string | null => {
+      if (excelRow < R32_FIRST_MATCH_ROW || excelRow > R32_LAST_MATCH_ROW) return null;
+      const entry = cellByAddress.get(`P${excelRow}`);
+      const raw = entry?.value != null && entry.value !== '' ? String(entry.value).trim() : '';
+      if (!raw) return null;
+      return translateWorkbookString(raw, i18n);
+    },
+    [cellByAddress, i18n],
+  );
 
   const sharedRowProps = {
     cellByAddress,
@@ -524,32 +599,103 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
               </table>
             </div>
 
-            {footerRows.length > 0 && (
-              <table className="tipset-table tipset-table--plain tipset-footer-table" role="grid">
-                <colgroup>
-                  {Array.from({ length: colCount }, (_, i) => (
-                    <col
-                      key={i}
-                      className={
-                        i >= lettersToColIndex('G') - 1 && i <= lettersToColIndex('O') - 1
-                          ? 'tipset-footer-col--collapse'
-                          : undefined
-                      }
-                    />
-                  ))}
-                </colgroup>
-                <tbody>
-                  {footerRows.map((row, i) => (
-                    <SheetRow
-                      key={footerStart + i}
-                      row={row}
-                      rowIndex0={footerStart + i}
-                      groupCtx={null}
-                      {...sharedRowProps}
-                    />
-                  ))}
-                </tbody>
-              </table>
+            {(bestThirdGridRows.length > 0 || r32GridRows.length > 0) && (
+              <div className="tipset-post-unified">
+                <div className="tipset-post-unified__header">
+                  {translateWorkbookString('16 delsfinal (32 lag)', i18n)}
+                </div>
+                <div
+                  className="tipset-post-unified__body"
+                  style={{
+                    gridTemplateColumns: `${GROUP_STAGE_GRID_MATCH_FR}fr ${GROUP_STAGE_GRID_X_FR}fr ${GROUP_STAGE_GRID_STANDINGS_FR}fr`,
+                  }}
+                >
+                  {r32GridRows.length > 0 && (
+                    <div className="tipset-post-group__r32">
+                      <div
+                        className="tipset-post-sheet-bridge tipset-post-sheet-bridge--r32"
+                        style={{ width: `calc(100% * 100 / ${GROUP_STAGE_GRID_MATCH_FR})` }}
+                      >
+                        <table
+                          className="tipset-table tipset-table--group-stage tipset-table--r32"
+                          role="grid"
+                          aria-colcount={colCount}
+                        >
+                          <colgroup>
+                            {Array.from({ length: colCount }, (_, i) => {
+                              const i0 = lettersToColIndex('G') - 1;
+                              const o0 = lettersToColIndex('O') - 1;
+                              const p0 = lettersToColIndex('P') - 1;
+                              const t0 = lettersToColIndex('T') - 1;
+                              const collapse = (i >= i0 && i <= o0) || (i >= p0 && i <= t0);
+                              const cls = GROUP_TABLE_COL_CLASSES[i];
+                              return (
+                                <col
+                                  key={i}
+                                  className={[cls, collapse ? 'tipset-r32-col--collapse' : '']
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                  style={
+                                    collapse || !cls ? undefined : { width: `${GROUP_COL_WIDTH_PCT[i]}%` }
+                                  }
+                                />
+                              );
+                            })}
+                          </colgroup>
+                          <tbody className="tipset-r32-block">
+                            {r32GridRows.map((row, i) => {
+                              const rowIndex0 = R32_FIRST_GRID_ROW_INDEX + i;
+                              if (rowIndex0 + 1 === R32_HEADER_ROW) return null;
+                              return (
+                                <SheetRow
+                                  key={rowIndex0}
+                                  row={row}
+                                  rowIndex0={rowIndex0}
+                                  groupCtx={null}
+                                  rowVariant="r32"
+                                  r32MatchHint={r32MatchHintForExcelRow(rowIndex0 + 1)}
+                                  {...sharedRowProps}
+                                />
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                  {bestThirdGridRows.length > 0 && (
+                    <div className="tipset-post-group__b3">
+                      <div
+                        className="tipset-post-sheet-bridge tipset-post-sheet-bridge--b3"
+                        style={{
+                          width: `calc(100% * 100 / ${GROUP_STAGE_GRID_STANDINGS_FR})`,
+                          marginLeft: `calc(-100% * ${GROUP_STAGE_GRID_MATCH_FR + GROUP_STAGE_GRID_X_FR} / ${GROUP_STAGE_GRID_STANDINGS_FR})`,
+                        }}
+                      >
+                        <table
+                          className="tipset-table tipset-table--group-stage tipset-table--best-third"
+                          role="grid"
+                          aria-colcount={colCount}
+                        >
+                          {GROUP_COLGROUP}
+                          <tbody className="tipset-best-third-block">
+                            {bestThirdGridRows.map((row, i) => (
+                              <SheetRow
+                                key={BEST_THIRD_PLACE_FIRST_GRID_ROW_INDEX + i}
+                                row={row}
+                                rowIndex0={BEST_THIRD_PLACE_FIRST_GRID_ROW_INDEX + i}
+                                groupCtx={null}
+                                rowVariant="bestThird"
+                                {...sharedRowProps}
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>
