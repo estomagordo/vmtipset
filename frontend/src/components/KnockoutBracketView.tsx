@@ -173,6 +173,16 @@ export function KnockoutBracketView({
 
   const k169Raw = bracketDrafts.K169?.trim() ?? '';
 
+  const penaltiesEntry = cellByAddress.get('B174');
+  const penaltiesOptions =
+    penaltiesEntry?.validation?.type === 'list' && Array.isArray(penaltiesEntry.validation.list_values)
+      ? penaltiesEntry.validation.list_values
+          .map((s) => String(s))
+          .filter((s) => !s.startsWith('='))
+      : ['Ja', 'Nej'];
+  const b174Raw = bracketDrafts.B174?.trim() ?? '';
+  const b174Select = b174Raw && penaltiesOptions.includes(b174Raw) ? b174Raw : '';
+
   return (
     <section className="tipset-knockout" aria-label={t('knockout.sectionAria')}>
       <div className="tipset-knockout__banner">
@@ -337,6 +347,27 @@ export function KnockoutBracketView({
             value={k169Raw}
             onChange={(e) => onBracketDraft('K169', e.target.value)}
           />
+        </div>
+        <div className="tipset-knockout__extra">
+          <div className="tipset-knockout__extra-pts">
+            {translateWorkbookString(cellLabel(cellByAddress, 'B172'), i18n)}
+          </div>
+          <div className="tipset-knockout__extra-label">
+            {translateWorkbookString(cellLabel(cellByAddress, 'B173'), i18n)}
+          </div>
+          <select
+            className="tipset-knockout__select tipset-knockout__select--wide"
+            aria-label="B174"
+            value={b174Select}
+            onChange={(e) => onBracketDraft('B174', e.target.value)}
+          >
+            <option value=""> </option>
+            {penaltiesOptions.map((o) => (
+              <option key={o} value={o}>
+                {translateWorkbookString(o, i18n)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </section>
