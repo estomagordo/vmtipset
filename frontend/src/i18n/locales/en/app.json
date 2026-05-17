@@ -13,9 +13,11 @@
   },
   "choices": {
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "blankScore": "(clear)"
   },
   "aria": {
-    "dropdownCell": "Cell {{address}}"
+    "dropdownCell": "Cell {{address}}",
+    "scorePicker": "Predicted goals for match, cell {{address}}"
   }
 }

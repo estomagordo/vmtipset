@@ -13,9 +13,11 @@
   },
   "choices": {
     "yes": "Ja",
-    "no": "Nej"
+    "no": "Nej",
+    "blankScore": "(tom)"
   },
   "aria": {
-    "dropdownCell": "Cell {{address}}"
+    "dropdownCell": "Cell {{address}}",
+    "scorePicker": "Tipsmål, cell {{address}}"
   }
 }

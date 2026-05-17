@@ -1,7 +1,13 @@
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkbookCell } from '../types/workbook';
 import { colIndexToLetters } from '../lib/excelAddress';
 import type { GridCell } from '../lib/gridModel';
+import {
+  getScoreSelectValue,
+  isScoreDigitListValidation,
+  SCORE_OPTION_VALUES,
+} from '../lib/scoreCells';
 import { translateWorkbookString } from '../i18n/workbookStrings';
 
 export type SpreadsheetViewProps = {
@@ -11,7 +17,13 @@ export type SpreadsheetViewProps = {
   colCount: number;
 };
 
-function CellBody({ entry }: { entry?: WorkbookCell }) {
+type CellBodyProps = {
+  entry?: WorkbookCell;
+  scoreDrafts: Record<string, string>;
+  onScoreDraft: (address: string, value: string) => void;
+};
+
+function CellBody({ entry, scoreDrafts, onScoreDraft }: CellBodyProps) {
   const { t, i18n } = useTranslation('app');
 
   if (!entry) return null;
@@ -31,8 +43,6 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
         </span>
       );
     }
-    // Excel often stores no cached value when IF(...,"",...) yields blank (e.g. unset bracket).
-    // Normal Excel UI shows an empty cell, not the formula text.
     return (
       <span
         className="excel-cell-text"
@@ -42,6 +52,25 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
       >
         {'\u00a0'}
       </span>
+    );
+  }
+
+  if (isScoreDigitListValidation(entry.validation)) {
+    const value = getScoreSelectValue(entry.address, entry, scoreDrafts);
+    return (
+      <select
+        className="excel-dropdown excel-score-select"
+        aria-label={t('aria.scorePicker', { address: entry.address })}
+        value={value}
+        onChange={(e) => onScoreDraft(entry.address, e.target.value)}
+      >
+        <option value="">{t('choices.blankScore')}</option>
+        {SCORE_OPTION_VALUES.map((n) => (
+          <option key={n} value={String(n)}>
+            {n}
+          </option>
+        ))}
+      </select>
     );
   }
 
@@ -82,6 +111,11 @@ function CellBody({ entry }: { entry?: WorkbookCell }) {
 
 export function SpreadsheetView({ title, grid, rowCount, colCount }: SpreadsheetViewProps) {
   const { t } = useTranslation('app');
+  const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
+  const onScoreDraft = useCallback((address: string, value: string) => {
+    setScoreDrafts((d) => ({ ...d, [address]: value }));
+  }, []);
+
   const columnLabels = Array.from({ length: colCount }, (_, i) => colIndexToLetters(i + 1));
 
   return (
@@ -113,14 +147,14 @@ export function SpreadsheetView({ title, grid, rowCount, colCount }: Spreadsheet
                   void columnIndex;
                   if (cell.kind === 'skip') return null;
                   const entry = cell.entry;
-                  const hasValidation = Boolean(entry?.validation?.type === 'list');
+                  const hasListValidation = entry?.validation?.type === 'list';
                   const isFormula = entry?.kind === 'formula';
                   const className = [
                     'excel-cell',
                     entry?.kind === 'number' || (isFormula && typeof entry?.cached_value === 'number')
                       ? 'excel-align-right'
                       : 'excel-align-left',
-                    hasValidation ? 'excel-cell-validated' : '',
+                    hasListValidation ? 'excel-cell-validated' : '',
                   ]
                     .filter(Boolean)
                     .join(' ');
@@ -132,7 +166,11 @@ export function SpreadsheetView({ title, grid, rowCount, colCount }: Spreadsheet
                       colSpan={cell.colSpan}
                       data-address={cell.address}
                     >
-                      <CellBody entry={entry} />
+                      <CellBody
+                        entry={entry}
+                        scoreDrafts={scoreDrafts}
+                        onScoreDraft={onScoreDraft}
+                      />
                     </td>
                   );
                 })}
