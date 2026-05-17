@@ -34,6 +34,8 @@ import { classifyGroupGridCell, GROUP_COL_WIDTH_PCT, GROUP_TABLE_COL_CLASSES, GR
 import { matchPickFromRow } from '../lib/match1x2';
 import { lettersToColIndex } from '../lib/excelAddress';
 import { tryRoundOf32TeamDisplay, R32_FIRST_MATCH_ROW, R32_LAST_MATCH_ROW, R32_HEADER_ROW, R32_FIRST_GRID_ROW_INDEX, R32_GRID_SLICE_END_EXCLUSIVE } from '../lib/roundOf32';
+import { KnockoutBracketView } from './KnockoutBracketView';
+import { normalizeBracketAddress } from '../lib/knockoutBracket';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -476,6 +478,7 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
   const { t, i18n } = useTranslation('app');
   const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
   const [metaDrafts, setMetaDrafts] = useState<Record<string, string>>({});
+  const [bracketDrafts, setBracketDrafts] = useState<Record<string, string>>({});
 
   const onScoreDraft = useCallback((address: string, value: string) => {
     setScoreDrafts((d) => ({ ...d, [address]: value }));
@@ -483,6 +486,11 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
 
   const onMetaDraft = useCallback((normalizedAddress: string, value: string) => {
     setMetaDrafts((d) => ({ ...d, [normalizedAddress]: value }));
+  }, []);
+
+  const onBracketDraft = useCallback((normalizedAddress: string, value: string) => {
+    const key = normalizeBracketAddress(normalizedAddress);
+    setBracketDrafts((d) => ({ ...d, [key]: value }));
   }, []);
 
   const standingTables = useMemo(
@@ -697,6 +705,15 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
                 </div>
               </div>
             )}
+
+            <KnockoutBracketView
+              cellByAddress={cellByAddress}
+              scoreDrafts={scoreDrafts}
+              standingTables={standingTables}
+              bestThirdPlaceRows={bestThirdPlaceRows}
+              bracketDrafts={bracketDrafts}
+              onBracketDraft={onBracketDraft}
+            />
           </div>
         </div>
       </div>

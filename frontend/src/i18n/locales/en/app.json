@@ -20,5 +20,8 @@
     "scorePicker": "Predicted goals for match, cell {{address}}",
     "playerName": "Your name",
     "playerEmail": "Your email address"
+  },
+  "knockout": {
+    "sectionAria": "Knockout bracket predictions"
   }
 }
