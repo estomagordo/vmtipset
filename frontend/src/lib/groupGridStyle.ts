@@ -1,9 +1,6 @@
 import { lettersToColIndex } from './excelAddress';
 
 const COL_D = lettersToColIndex('D');
-const COL_J = lettersToColIndex('J');
-const COL_B = lettersToColIndex('B');
-const COL_F = lettersToColIndex('F');
 const COL_K = lettersToColIndex('K');
 const COL_T = lettersToColIndex('T');
 
@@ -21,7 +18,8 @@ export function classifyGroupGridCell(
     return tier;
   }
 
-  if (gridCol === COL_D || gridCol === COL_J) {
+  /* Hyphen column stays accent on every row; match index (J) only on header row. */
+  if (gridCol === COL_D) {
     tier.push('tipset-cell--grp-dj');
     return tier;
   }
@@ -40,12 +38,13 @@ export function classifyGroupGridCell(
     return tier;
   }
 
-  if (rowInBlock >= 1 && (gridCol === COL_B || gridCol === COL_F)) {
-    tier.push('tipset-cell--grp-t2');
-  }
-
   return tier;
 }
+
+/** Percent widths for group-stage columns (A–T); sum = 100 (used with `table-layout: fixed`). */
+export const GROUP_COL_WIDTH_PCT: readonly number[] = [
+  4, 10, 4, 2, 4, 10, 4, 4, 4, 4, 13, 4, 4, 4, 4, 4, 4, 4, 4, 5,
+] as const;
 
 /** Column width hints for compact match / prediction layout (A–T). */
 export const GROUP_TABLE_COL_CLASSES: readonly string[] = [

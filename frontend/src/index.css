@@ -135,28 +135,56 @@ body {
   margin-top: 2px;
 }
 
-.tipset-group-card {
-  background: var(--tipset-group-card-bg);
-  border-radius: 10px;
-  padding: 8px 10px;
-  box-shadow: 0 1px 4px rgba(45, 90, 160, 0.1);
+.tipset-group-stage {
+  margin: 0;
+  padding: 0;
 }
 
-.tipset-group-card .tipset-table {
+.tipset-table--group-stage {
   width: 100%;
-  table-layout: auto;
-  border-collapse: collapse;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
   background: transparent;
+  margin: 0;
 }
 
-/* Default cell in card: show card tint; tier / header classes override below. */
-.tipset-group-card .tipset-cell {
-  background: transparent;
+.tipset-table--group-stage col {
+  min-width: 0;
 }
 
-.tipset-group-card .tipset-cell--input {
+.tipset-table--group-stage .tipset-group-block .tipset-cell {
+  background: var(--tipset-group-card-bg);
+}
+
+.tipset-table--group-stage .tipset-group-block .tipset-cell--input {
   background: var(--tipset-input-bg);
   box-shadow: inset 0 0 0 1px rgba(240, 215, 140, 0.35);
+}
+
+.tipset-group-spacer td {
+  height: 10px;
+  padding: 0;
+  border: none;
+  background: var(--tipset-surface);
+  line-height: 0;
+  font-size: 0;
+}
+
+.tipset-table--group-stage .tipset-group-block tr:first-child td:first-child {
+  border-top-left-radius: 10px;
+}
+
+.tipset-table--group-stage .tipset-group-block tr:first-child td:last-child {
+  border-top-right-radius: 10px;
+}
+
+.tipset-table--group-stage .tipset-group-block tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+
+.tipset-table--group-stage .tipset-group-block tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
 }
 
 .tipset-col--match {
@@ -189,73 +217,73 @@ body {
   min-width: 2rem;
 }
 
-.tipset-group-card .tipset-cell--pred-team {
+.tipset-table--group-stage .tipset-cell--pred-team {
   max-width: 7.5rem;
   padding-right: 0.2rem;
 }
 
-.tipset-group-card .tipset-cell--pred-team .tipset-cell-text {
+.tipset-table--group-stage .tipset-cell--pred-team .tipset-cell-text {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* Space between away goals (E) and away team (F) */
-.tipset-group-card .tipset-cell--away-score-pad {
+.tipset-table--group-stage .tipset-cell--away-score-pad {
   padding-right: 0.45rem;
 }
 
 /* Gap between away score (E) and away team (F) */
-.tipset-group-card .tipset-cell--after-away-score {
+.tipset-table--group-stage .tipset-cell--after-away-score {
   padding-left: 0.45rem;
 }
 
-.tipset-group-card .tipset-cell--stat-name {
+.tipset-table--group-stage .tipset-cell--stat-name {
   min-width: 8rem;
   padding-right: 0.35rem;
 }
 
-.tipset-group-card .tipset-cell--stat-name .tipset-cell-text {
+.tipset-table--group-stage .tipset-cell--stat-name .tipset-cell-text {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.tipset-group-card .tipset-cell--grp-h {
+.tipset-table--group-stage .tipset-cell--grp-h {
   max-width: none;
 }
 
-/* Must beat .tipset-group-card .tipset-cell and .tipset-cell defaults (same specificity, order + intent). */
-.tipset-group-card .tipset-cell--grp-h,
-.tipset-group-card .tipset-cell--grp-dj {
+/* Must beat base group-stage cell background (same specificity, order + intent). */
+.tipset-table--group-stage .tipset-cell--grp-h,
+.tipset-table--group-stage .tipset-cell--grp-dj {
   background: var(--tipset-group-header-bg);
   color: var(--tipset-group-header-fg);
   font-weight: 650;
 }
 
-.tipset-group-card .tipset-cell--grp-dj {
+.tipset-table--group-stage .tipset-cell--grp-dj {
   font-weight: 600;
 }
 
-.tipset-group-card .tipset-cell--grp-t2 {
+.tipset-table--group-stage .tipset-cell--grp-t2 {
   background: var(--tipset-group-t2-bg);
   color: #0a1624;
   font-weight: 600;
 }
 
-.tipset-group-card .tipset-cell--grp-t3 {
+.tipset-table--group-stage .tipset-cell--grp-t3 {
   background: var(--tipset-group-t3-bg);
   color: #0a1624;
   font-weight: 550;
 }
 
-.tipset-group-card .tipset-cell--grp-t4 {
+.tipset-table--group-stage .tipset-cell--grp-t4 {
   background: var(--tipset-group-t4-bg);
   color: #0a1624;
 }
 
-.tipset-group-card .tipset-cell--grp-h .tipset-cell-text,
-.tipset-group-card .tipset-cell--grp-h .tipset-cell-num,
-.tipset-group-card .tipset-cell--grp-dj .tipset-cell-text,
-.tipset-group-card .tipset-cell--grp-dj .tipset-cell-num {
+.tipset-table--group-stage .tipset-cell--grp-h .tipset-cell-text,
+.tipset-table--group-stage .tipset-cell--grp-h .tipset-cell-num,
+.tipset-table--group-stage .tipset-cell--grp-dj .tipset-cell-text,
+.tipset-table--group-stage .tipset-cell--grp-dj .tipset-cell-num {
   color: var(--tipset-group-header-fg);
 }
 
@@ -286,6 +314,10 @@ body {
   text-align: right;
 }
 
+.tipset-align-center {
+  text-align: center;
+}
+
 .tipset-align-left {
   text-align: left;
 }
@@ -296,6 +328,23 @@ body {
   white-space: nowrap;
 }
 
+.tipset-x-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #c62828;
+  line-height: 1;
+  min-height: 1.4rem;
+}
+
+.tipset-cell-1x2-empty {
+  display: block;
+  min-height: 1.4rem;
+}
+
 .tipset-cell-num {
   font-variant-numeric: tabular-nums;
   font-size: 12.5px;
@@ -304,7 +353,8 @@ body {
 .tipset-text-input {
   display: block;
   width: 100%;
-  min-width: 14rem;
+  max-width: 16rem;
+  min-width: 0;
   margin: 0;
   padding: 0.4rem 0.55rem;
   border: 1px solid var(--tipset-input-border);

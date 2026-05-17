@@ -14,7 +14,7 @@ export const GROUP_STAGE_FIRST_ROW = 14;
 /** Rows between each group's `startRow` (section headers / spacing rows in the template). */
 export const GROUP_STAGE_ROW_STRIDE = 8;
 
-/** Group letters in schedule order for this template (A–K). */
+/** Group letters in schedule order for this template (A–L). */
 export const GROUP_STAGE_LETTERS = [
   'A',
   'B',
@@ -27,6 +27,7 @@ export const GROUP_STAGE_LETTERS = [
   'I',
   'J',
   'K',
+  'L',
 ] as const;
 
 export const GROUP_STAGE_STANDING_ROWS = 4;
