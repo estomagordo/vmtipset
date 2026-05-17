@@ -1,8 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkbookCell } from '../types/workbook';
 import { colIndexToLetters } from '../lib/excelAddress';
 import type { GridCell } from '../lib/gridModel';
+import {
+  computeGroupStandings,
+  resolveGroupStandingDisplay,
+  type StandingRow,
+} from '../lib/groupStandings';
 import {
   getScoreSelectValue,
   isScoreDigitListValidation,
@@ -15,20 +20,37 @@ export type SpreadsheetViewProps = {
   grid: GridCell[][];
   rowCount: number;
   colCount: number;
+  cellByAddress: Map<string, WorkbookCell>;
 };
 
 type CellBodyProps = {
   entry?: WorkbookCell;
   scoreDrafts: Record<string, string>;
   onScoreDraft: (address: string, value: string) => void;
+  standingTables: Map<string, StandingRow[] | null>;
 };
 
-function CellBody({ entry, scoreDrafts, onScoreDraft }: CellBodyProps) {
+function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBodyProps) {
   const { t, i18n } = useTranslation('app');
 
   if (!entry) return null;
 
   if (entry.kind === 'formula') {
+    const standing = resolveGroupStandingDisplay(entry.formula, standingTables);
+    if (standing.kind === 'value') {
+      const v = standing.value;
+      const isNum = typeof v === 'number';
+      const text = isNum ? String(v) : translateWorkbookString(String(v), i18n);
+      return (
+        <span
+          className={isNum ? 'excel-cell-num' : 'excel-cell-text'}
+          title={entry.formula ? String(entry.formula) : undefined}
+        >
+          {text}
+        </span>
+      );
+    }
+
     const cached = entry.cached_value;
     const hasCached = cached !== undefined && cached !== null;
     if (hasCached) {
@@ -64,7 +86,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft }: CellBodyProps) {
         value={value}
         onChange={(e) => onScoreDraft(entry.address, e.target.value)}
       >
-        <option value="">{t('choices.blankScore')}</option>
+        <option value="" />
         {SCORE_OPTION_VALUES.map((n) => (
           <option key={n} value={String(n)}>
             {n}
@@ -109,12 +131,17 @@ function CellBody({ entry, scoreDrafts, onScoreDraft }: CellBodyProps) {
   return null;
 }
 
-export function SpreadsheetView({ title, grid, rowCount, colCount }: SpreadsheetViewProps) {
+export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress }: SpreadsheetViewProps) {
   const { t } = useTranslation('app');
   const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
   const onScoreDraft = useCallback((address: string, value: string) => {
     setScoreDrafts((d) => ({ ...d, [address]: value }));
   }, []);
+
+  const standingTables = useMemo(
+    () => computeGroupStandings(cellByAddress, scoreDrafts),
+    [cellByAddress, scoreDrafts],
+  );
 
   const columnLabels = Array.from({ length: colCount }, (_, i) => colIndexToLetters(i + 1));
 
@@ -170,6 +197,7 @@ export function SpreadsheetView({ title, grid, rowCount, colCount }: Spreadsheet
                         entry={entry}
                         scoreDrafts={scoreDrafts}
                         onScoreDraft={onScoreDraft}
+                        standingTables={standingTables}
                       />
                     </td>
                   );

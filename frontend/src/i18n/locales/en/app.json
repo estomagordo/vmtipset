@@ -13,8 +13,7 @@
   },
   "choices": {
     "yes": "Yes",
-    "no": "No",
-    "blankScore": "(clear)"
+    "no": "No"
   },
   "aria": {
     "dropdownCell": "Cell {{address}}",

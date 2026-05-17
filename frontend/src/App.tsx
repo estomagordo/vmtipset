@@ -59,6 +59,7 @@ export default function App() {
         grid={gridModel.grid}
         rowCount={gridModel.rowCount}
         colCount={gridModel.colCount}
+        cellByAddress={gridModel.cellByAddress}
       />
     </div>
   );
