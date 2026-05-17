@@ -893,8 +893,21 @@ code {
   align-items: center;
 }
 
-.tipset-knockout__bronze-picks .tipset-knockout__select--playoff {
+.tipset-knockout__bronze-team {
   flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--tipset-knockout-pick-w);
+  min-height: 1.45rem;
+  padding: 4px 6px 4px 8px;
+  border: 1px solid #1a1a1a;
+  border-radius: 2px;
+  background: #ffff00;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
 }
 
 .tipset-knockout__extras {

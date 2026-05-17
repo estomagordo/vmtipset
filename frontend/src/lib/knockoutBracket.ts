@@ -73,11 +73,13 @@ const SF_RIGHT: Record<string, readonly [string, string]> = {
   N156: ['P154', 'P158'],
 };
 
+/** Semifinal winners that feed the left/right finalist pick (G152 / L152). */
+const FINALIST_LEFT_SEMIS: readonly [string, string] = ['F148', 'F156'];
+const FINALIST_RIGHT_SEMIS: readonly [string, string] = ['N148', 'N156'];
+
 const FINALIST_LEFT = 'G152';
 const FINALIST_RIGHT = 'L152';
 const CHAMPION = 'J152';
-
-const THIRD_CELLS = new Set(['G161', 'L161']);
 
 function draftNorm(ctx: BracketResolveCtx, address: string): string {
   const n = normalizeBracketAddress(address);
@@ -209,9 +211,7 @@ function sfSelectOptions(address: string, ctx: BracketResolveCtx): string[] {
 }
 
 function finalistOptions(side: 'left' | 'right', ctx: BracketResolveCtx): string[] {
-  const addr = side === 'left' ? FINALIST_LEFT : FINALIST_RIGHT;
-  const sf = side === 'left' ? SF_LEFT[addr] : SF_RIGHT[addr];
-  if (!sf) return [];
+  const sf = side === 'left' ? FINALIST_LEFT_SEMIS : FINALIST_RIGHT_SEMIS;
   const out = new Set<string>();
   for (const f of sf) {
     const d = draftNorm(ctx, f);
@@ -227,14 +227,18 @@ function finalistOptions(side: 'left' | 'right', ctx: BracketResolveCtx): string
 }
 
 function championOptions(ctx: BracketResolveCtx): string[] {
-  const out = new Set<string>();
-  for (const t of finalistOptions('left', ctx)) {
-    out.add(t);
+  const l = pickOrResolvedBracket(ctx, FINALIST_LEFT);
+  const r = pickOrResolvedBracket(ctx, FINALIST_RIGHT);
+  if (!l || !r) {
+    return [];
   }
-  for (const t of finalistOptions('right', ctx)) {
-    out.add(t);
-  }
-  return [...out];
+  return l === r ? [l] : [l, r];
+}
+
+function pickOrResolvedBracket(ctx: BracketResolveCtx, addr: string): string | null {
+  const d = draftNorm(ctx, addr);
+  if (d) return d;
+  return resolvedBracketPick(addr, ctx);
 }
 
 /** All non-empty pick options for a knockout list cell. */
@@ -259,9 +263,6 @@ export function bracketSelectOptions(address: string, ctx: BracketResolveCtx): s
   if (n === CHAMPION) {
     return championOptions(ctx);
   }
-  if (THIRD_CELLS.has(n)) {
-    return thirdPlaceOptions(ctx);
-  }
   return [];
 }
 
@@ -275,36 +276,24 @@ export function resolvedBracketPick(address: string, ctx: BracketResolveCtx): st
   return null;
 }
 
-function loserOfSemifinalSide(
+/**
+ * Bronze opponent from one bracket half: the semifinal winner (F148/F156 or N148/N156) that was
+ * not picked as finalist in G152/L152. Requires finalist pick and both semi picks (or unique resolution).
+ */
+export function bronzeTeamFromFinalistHalf(
   finalistCell: string,
   sfA: string,
   sfB: string,
   ctx: BracketResolveCtx,
-): string[] {
+): string | null {
   const w = draftNorm(ctx, finalistCell);
-  const a = resolvedBracketPick(sfA, ctx);
-  const b = resolvedBracketPick(sfB, ctx);
-  if (!a && !b) return [];
-  if (w && a && w === a && b) return [b];
-  if (w && b && w === b && a) return [a];
-  const u = new Set<string>();
-  if (a) u.add(a);
-  if (b) u.add(b);
-  return [...u];
-}
-
-/** FIFA third-place match: losing semifinalists (M101 / M102 losers). */
-export function thirdPlaceOptions(ctx: BracketResolveCtx): string[] {
-  const left = loserOfSemifinalSide(FINALIST_LEFT, 'F148', 'F156', ctx);
-  const right = loserOfSemifinalSide(FINALIST_RIGHT, 'N148', 'N156', ctx);
-  const u = new Set<string>();
-  for (const t of left) {
-    u.add(t);
-  }
-  for (const t of right) {
-    u.add(t);
-  }
-  return [...u];
+  if (!w) return null;
+  const a = pickOrResolvedBracket(ctx, sfA);
+  const b = pickOrResolvedBracket(ctx, sfB);
+  if (!a || !b) return null;
+  if (w === a) return b;
+  if (w === b) return a;
+  return null;
 }
 
 export const KNOCKOUT_BRACKET_PICK_ADDRESSES: readonly string[] = [
@@ -316,6 +305,4 @@ export const KNOCKOUT_BRACKET_PICK_ADDRESSES: readonly string[] = [
   FINALIST_LEFT,
   FINALIST_RIGHT,
   CHAMPION,
-  'G161',
-  'L161',
 ];

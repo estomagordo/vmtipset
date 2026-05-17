@@ -8,6 +8,7 @@ import { translateWorkbookString } from '../i18n/workbookStrings';
 import {
   type BracketResolveCtx,
   bracketSelectOptions,
+  bronzeTeamFromFinalistHalf,
   normalizeBracketAddress,
 } from '../lib/knockoutBracket';
 
@@ -184,6 +185,29 @@ export function KnockoutBracketView({
   const b174Raw = bracketDrafts.B174?.trim() ?? '';
   const b174Select = b174Raw && penaltiesOptions.includes(b174Raw) ? b174Raw : '';
 
+  const bronzeLeft = useMemo(
+    () =>
+      bronzeTeamFromFinalistHalf('G152', 'F148', 'F156', {
+        cellByAddress,
+        scoreDrafts,
+        standingTables,
+        bestThird: bestThirdPlaceRows,
+        bracketDrafts,
+      }),
+    [cellByAddress, scoreDrafts, standingTables, bestThirdPlaceRows, bracketDrafts],
+  );
+  const bronzeRight = useMemo(
+    () =>
+      bronzeTeamFromFinalistHalf('L152', 'N148', 'N156', {
+        cellByAddress,
+        scoreDrafts,
+        standingTables,
+        bestThird: bestThirdPlaceRows,
+        bracketDrafts,
+      }),
+    [cellByAddress, scoreDrafts, standingTables, bestThirdPlaceRows, bracketDrafts],
+  );
+
   return (
     <section className="tipset-knockout" aria-label={t('knockout.sectionAria')}>
       <div className="tipset-knockout__banner">
@@ -301,8 +325,12 @@ export function KnockoutBracketView({
           </div>
         </div>
         <div className="tipset-knockout__bronze-picks">
-          <BracketPick address="G161" ctx={ctx} align="left" i18n={i18n} onBracketDraft={onBracketDraft} />
-          <BracketPick address="L161" ctx={ctx} align="left" i18n={i18n} onBracketDraft={onBracketDraft} />
+          <div className="tipset-knockout__bronze-team" aria-label="G161">
+            {bronzeLeft ? translateWorkbookString(bronzeLeft, i18n) : '\u00a0'}
+          </div>
+          <div className="tipset-knockout__bronze-team" aria-label="L161">
+            {bronzeRight ? translateWorkbookString(bronzeRight, i18n) : '\u00a0'}
+          </div>
         </div>
       </div>
 
