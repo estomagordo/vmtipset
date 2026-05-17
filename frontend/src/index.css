@@ -143,6 +143,14 @@ body {
   min-width: 0;
 }
 
+.tipset-footer-table col.tipset-footer-col--collapse {
+  visibility: collapse;
+  width: 0;
+  max-width: 0;
+  padding: 0;
+  border: none;
+}
+
 .tipset-group-stage {
   margin: 0;
   padding: 0;

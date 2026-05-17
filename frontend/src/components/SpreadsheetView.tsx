@@ -32,6 +32,7 @@ import {
 import { classifyGroupGridCell, GROUP_COL_WIDTH_PCT, GROUP_TABLE_COL_CLASSES } from '../lib/groupGridStyle';
 import { matchPickFromRow } from '../lib/match1x2';
 import { lettersToColIndex } from '../lib/excelAddress';
+import { tryRoundOf32TeamDisplay, R32_FIRST_MATCH_ROW, R32_LAST_MATCH_ROW } from '../lib/roundOf32';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -89,6 +90,21 @@ function CellBody({
 }: CellBodyProps) {
   const { t, i18n } = useTranslation('app');
   const key = normalizeCellAddress(address);
+
+  const r32Display = tryRoundOf32TeamDisplay(
+    key,
+    gridCol,
+    standingTables,
+    cellByAddress,
+    bestThirdPlaceRows,
+  );
+  if (r32Display !== undefined) {
+    if (r32Display === '') {
+      return <span className="tipset-cell-text">{'\u00a0'}</span>;
+    }
+    const text = translateWorkbookString(r32Display, i18n);
+    return <span className="tipset-cell-text">{text}</span>;
+  }
 
   if (
     groupCtx != null &&
@@ -290,6 +306,12 @@ function SheetRow({
             ? []
             : classifyGroupGridCell(gridCol, excelRow, groupCtx.blockHeaderExcelRow, groupCtx.rowInBlock);
 
+        const isRoundOf32TeamCol = Boolean(
+          groupCtx == null &&
+            excelRow >= R32_FIRST_MATCH_ROW &&
+            excelRow <= R32_LAST_MATCH_ROW &&
+            (gridCol === COL_B || gridCol === COL_F),
+        );
         const isPredTeamCol = Boolean(
           groupCtx && groupCtx.rowInBlock >= 1 && (gridCol === COL_B || gridCol === COL_F),
         );
@@ -356,7 +378,7 @@ function SheetRow({
           ...groupMods,
           alignClass,
           hasListValidation || isMetaTextField ? 'tipset-cell--input' : '',
-          isPredTeamCol ? 'tipset-cell--pred-team' : '',
+          isPredTeamCol || isRoundOf32TeamCol ? 'tipset-cell--pred-team' : '',
           isStatNameCol ? 'tipset-cell--stat-name' : '',
           awayScorePad ? 'tipset-cell--away-score-pad' : '',
           afterAwayScore ? 'tipset-cell--after-away-score' : '',
@@ -504,7 +526,18 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
 
             {footerRows.length > 0 && (
               <table className="tipset-table tipset-table--plain tipset-footer-table" role="grid">
-                {GROUP_COLGROUP}
+                <colgroup>
+                  {Array.from({ length: colCount }, (_, i) => (
+                    <col
+                      key={i}
+                      className={
+                        i >= lettersToColIndex('G') - 1 && i <= lettersToColIndex('O') - 1
+                          ? 'tipset-footer-col--collapse'
+                          : undefined
+                      }
+                    />
+                  ))}
+                </colgroup>
                 <tbody>
                   {footerRows.map((row, i) => (
                     <SheetRow

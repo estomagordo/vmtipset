@@ -20,17 +20,19 @@ const COL_Q = lettersToColIndex('Q');
 const COL_R = lettersToColIndex('R');
 const COL_S = lettersToColIndex('S');
 
-export type BestThirdPlaceRow = StandingRow & { rank: number };
+export type BestThirdPlaceRow = StandingRow & { rank: number; groupLetter: string };
 
 function thirdPlaceRowForGroup(
   block: GroupStageBlock,
   tables: Map<string, StandingRow[] | null>,
   cellByAddress: Map<string, WorkbookCell>,
-): StandingRow | null {
+): (StandingRow & { groupLetter: string }) | null {
   const live = tables.get(block.id);
-  if (live && live.length >= 3) return live[2];
+  const letter = block.id.replace(/^Grupp /, '');
+  if (live && live.length >= 3) return { ...live[2], groupLetter: letter };
   const excelRow = block.startRow + 2;
-  return readStandingRowFromWorkbook(cellByAddress, excelRow);
+  const fromMall = readStandingRowFromWorkbook(cellByAddress, excelRow);
+  return fromMall ? { ...fromMall, groupLetter: letter } : null;
 }
 
 /**
@@ -40,7 +42,7 @@ export function computeBestThirdPlaceTable(
   tables: Map<string, StandingRow[] | null>,
   cellByAddress: Map<string, WorkbookCell>,
 ): BestThirdPlaceRow[] | null {
-  const thirds: StandingRow[] = [];
+  const thirds: (StandingRow & { groupLetter: string })[] = [];
   for (const block of GROUP_STAGE_BLOCKS) {
     const row = thirdPlaceRowForGroup(block, tables, cellByAddress);
     if (row) thirds.push(row);
