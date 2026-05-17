@@ -5,9 +5,10 @@ import { colIndexToLetters } from '../lib/excelAddress';
 import type { GridCell } from '../lib/gridModel';
 import {
   computeGroupStandings,
-  resolveGroupStandingDisplay,
+  resolveStandingsCellAtAddress,
   type StandingRow,
 } from '../lib/groupStandings';
+import { GROUP_STAGE_BLOCKS } from '../config/groupStageBlocks';
 import {
   getScoreSelectValue,
   isScoreDigitListValidation,
@@ -36,7 +37,7 @@ function CellBody({ entry, scoreDrafts, onScoreDraft, standingTables }: CellBody
   if (!entry) return null;
 
   if (entry.kind === 'formula') {
-    const standing = resolveGroupStandingDisplay(entry.formula, standingTables);
+    const standing = resolveStandingsCellAtAddress(entry.address, standingTables, GROUP_STAGE_BLOCKS);
     if (standing.kind === 'value') {
       const v = standing.value;
       const isNum = typeof v === 'number';
