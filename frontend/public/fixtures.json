@@ -306,7 +306,7 @@
         {
           "match_id": "M23",
           "excel_row": 42,
-          "home_team": "Australien",
+          "home_team": "Turkiet",
           "away_team": "USA",
           "score_cells": {
             "home": "C42",
