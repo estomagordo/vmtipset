@@ -50,7 +50,9 @@ function teamAtGroupRank(
   if (!block) return null;
   const fromFixture = block.teams[rank0]?.trim();
   if (fromFixture) return fromFixture;
-  return readStandingRowFromWorkbook(cellByAddress, block.start_row + rank0)?.name?.trim() ?? null;
+  return (
+    readStandingRowFromWorkbook(cellByAddress, block.start_row + rank0, fixtures)?.name?.trim() ?? null
+  );
 }
 
 function thirdPlacedTeamFromGroup(

@@ -4,8 +4,8 @@
 
 | File | Role |
 |------|------|
-| `workbook_dump.json` | Mall layout: labels, merges, validations, formulas (presentation layer) |
-| `fixtures.json` | Tournament structure: group teams, fixtures, R32 slots, knockout bracket wiring |
+| `workbook_dump.json` | Sheet shell: layout, labels, merges, score/meta validations, static copy (not team names) |
+| `fixtures.json` | Tournament data: teams, fixtures, standings seeds, R32 slots, knockout bracket |
 
 Regenerate both from the Excel mall:
 

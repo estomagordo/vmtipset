@@ -37,7 +37,11 @@ import { tryRoundOf32TeamDisplay, R32_FIRST_MATCH_ROW, R32_LAST_MATCH_ROW, R32_H
 import { KnockoutBracketView } from './KnockoutBracketView';
 import { normalizeBracketAddress } from '../lib/knockoutBracket';
 import type { FixturesModel } from '../lib/fixturesModel';
-import { r32MatchForExcelRow } from '../lib/fixturesModel';
+import {
+  groupFixtureMatchId,
+  groupFixtureTeamName,
+  r32MatchForExcelRow,
+} from '../lib/fixturesModel';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -62,6 +66,7 @@ const GROUP_COLGROUP = (
   </colgroup>
 );
 
+const COL_A = lettersToColIndex('A');
 const COL_G = lettersToColIndex('G');
 const COL_I = lettersToColIndex('I');
 
@@ -115,6 +120,19 @@ function CellBody({
     return <span className="tipset-cell-text">{text}</span>;
   }
 
+  const fixtureTeam = groupFixtureTeamName(fixtures, excelRow, gridCol);
+  if (fixtureTeam) {
+    const text = translateWorkbookString(fixtureTeam, i18n);
+    return <span className="tipset-cell-text">{text}</span>;
+  }
+
+  if (gridCol === COL_A) {
+    const matchId = groupFixtureMatchId(fixtures, excelRow);
+    if (matchId) {
+      return <span className="tipset-cell-text">{matchId}</span>;
+    }
+  }
+
   if (
     groupCtx != null &&
     groupCtx.rowInBlock >= 1 &&
@@ -165,7 +183,12 @@ function CellBody({
   if (!entry) return null;
 
   if (entry.kind === 'formula') {
-    const standing = resolveStandingsCellAtAddress(entry.address, standingTables, GROUP_STAGE_BLOCKS);
+    const standing = resolveStandingsCellAtAddress(
+      entry.address,
+      standingTables,
+      GROUP_STAGE_BLOCKS,
+      fixtures,
+    );
     if (standing.kind === 'value') {
       const v = standing.value;
       const isNum = typeof v === 'number';
@@ -520,8 +543,8 @@ export function SpreadsheetView({
   );
 
   const bestThirdPlaceRows = useMemo(
-    () => computeBestThirdPlaceTable(standingTables, cellByAddress),
-    [standingTables, cellByAddress],
+    () => computeBestThirdPlaceTable(standingTables, cellByAddress, fixtures),
+    [standingTables, cellByAddress, fixtures],
   );
 
   const preambleRows = grid.slice(0, GROUP_STAGE_FIRST_HEADER_GRID_INDEX);

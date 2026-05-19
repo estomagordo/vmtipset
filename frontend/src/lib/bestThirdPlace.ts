@@ -1,6 +1,7 @@
 import { GROUP_STAGE_BLOCKS, type GroupStageBlock } from '../config/groupStageBlocks';
 import type { WorkbookCell } from '../types/workbook';
 import { lettersToColIndex } from './excelAddress';
+import { type FixturesModel } from './fixturesModel';
 import { type StandingRow, compareStandings, readStandingRowFromWorkbook } from './groupStandings';
 
 /** Mall sheet row with column labels S, V, O, … for the third-place ranking table. */
@@ -32,25 +33,27 @@ function thirdPlaceRowForGroup(
   block: GroupStageBlock,
   tables: Map<string, StandingRow[] | null>,
   cellByAddress: Map<string, WorkbookCell>,
+  fixtures?: FixturesModel,
 ): (StandingRow & { groupLetter: string }) | null {
   const live = tables.get(block.id);
   const letter = block.id.replace(/^Grupp /, '');
   if (live && live.length >= 3) return { ...live[2], groupLetter: letter };
   const excelRow = block.startRow + 2;
-  const fromMall = readStandingRowFromWorkbook(cellByAddress, excelRow);
-  return fromMall ? { ...fromMall, groupLetter: letter } : null;
+  const fromFixtures = readStandingRowFromWorkbook(cellByAddress, excelRow, fixtures);
+  return fromFixtures ? { ...fromFixtures, groupLetter: letter } : null;
 }
 
 /**
- * 3rd-placed team per group: live from predictions when available, otherwise the mall base row.
+ * 3rd-placed team per group: live from predictions when available, otherwise fixtures template order.
  */
 export function computeBestThirdPlaceTable(
   tables: Map<string, StandingRow[] | null>,
   cellByAddress: Map<string, WorkbookCell>,
+  fixtures?: FixturesModel,
 ): BestThirdPlaceRow[] | null {
   const thirds: (StandingRow & { groupLetter: string })[] = [];
   for (const block of GROUP_STAGE_BLOCKS) {
-    const row = thirdPlaceRowForGroup(block, tables, cellByAddress);
+    const row = thirdPlaceRowForGroup(block, tables, cellByAddress, fixtures);
     if (row) thirds.push(row);
   }
   if (thirds.length === 0) return null;

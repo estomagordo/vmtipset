@@ -5,7 +5,7 @@ import {
 } from '../config/groupStageBlocks';
 import type { GroupBlock } from '../types/fixtures';
 import type { WorkbookCell } from '../types/workbook';
-import type { FixturesModel } from './fixturesModel';
+import { standingTeamNameAtRow, type FixturesModel } from './fixturesModel';
 import { lettersToColIndex, parseA1 } from './excelAddress';
 import { getScoreSelectValue } from './scoreCells';
 
@@ -87,8 +87,11 @@ function readStandingLineNameFromCell(entry: WorkbookCell | undefined): string {
 export function readStandingRowFromWorkbook(
   cellByAddress: Map<string, WorkbookCell>,
   excelRow: number,
+  fixtures?: FixturesModel,
 ): StandingRow | null {
-  const name = readStandingLineNameFromCell(cellByAddress.get(`K${excelRow}`));
+  const name =
+    (fixtures ? standingTeamNameAtRow(fixtures, excelRow) : undefined) ??
+    readStandingLineNameFromCell(cellByAddress.get(`K${excelRow}`));
   if (!name) return null;
   return {
     name,
@@ -238,6 +241,7 @@ export function resolveStandingsCellAtAddress(
   address: string,
   tables: Map<string, StandingRow[] | null>,
   blocks: readonly GroupStageBlock[] = GROUP_STAGE_BLOCKS,
+  fixtures?: FixturesModel,
 ): StandingResolve {
   let row: number;
   let col: number;
@@ -253,7 +257,19 @@ export function resolveStandingsCellAtAddress(
   if (!located) return { kind: 'none' };
 
   const table = tables.get(located.block.id);
-  if (table === null || table === undefined) return { kind: 'none' };
+  if (table === null || table === undefined) {
+    if (fixtures) {
+      if (located.statKey === 'name') {
+        const name = standingTeamNameAtRow(fixtures, row);
+        if (name) return { kind: 'value', value: name };
+      }
+      const zeroStats: StandingStatKey[] = ['played', 'wins', 'draws', 'losses', 'gf', 'ga', 'gd', 'pts'];
+      if (zeroStats.includes(located.statKey)) {
+        return { kind: 'value', value: 0 };
+      }
+    }
+    return { kind: 'none' };
+  }
 
   const rank = located.rank;
   if (rank < 0 || rank >= table.length) return { kind: 'none' };
