@@ -11,8 +11,10 @@ import {
   bronzeTeamFromFinalistHalf,
   normalizeBracketAddress,
 } from '../lib/knockoutBracket';
+import type { FixturesModel } from '../lib/fixturesModel';
 
 export type KnockoutBracketViewProps = {
+  fixtures: FixturesModel;
   cellByAddress: Map<string, WorkbookCell>;
   scoreDrafts: Record<string, string>;
   standingTables: Map<string, StandingRow[] | null>;
@@ -98,6 +100,7 @@ function BracketPick({
   const n = normalizeBracketAddress(address);
   const opts = useMemo(() => bracketSelectOptions(n, ctx), [
     n,
+    ctx.fixtures,
     ctx.cellByAddress,
     ctx.scoreDrafts,
     ctx.standingTables,
@@ -132,6 +135,7 @@ function BracketPick({
 }
 
 export function KnockoutBracketView({
+  fixtures,
   cellByAddress,
   scoreDrafts,
   standingTables,
@@ -143,13 +147,14 @@ export function KnockoutBracketView({
 
   const ctx: BracketResolveCtx = useMemo(
     () => ({
+      fixtures,
       cellByAddress,
       scoreDrafts,
       standingTables,
       bestThird: bestThirdPlaceRows,
       bracketDrafts,
     }),
-    [cellByAddress, scoreDrafts, standingTables, bestThirdPlaceRows, bracketDrafts],
+    [fixtures, cellByAddress, scoreDrafts, standingTables, bestThirdPlaceRows, bracketDrafts],
   );
 
   const headerAddrs = [
@@ -185,28 +190,17 @@ export function KnockoutBracketView({
   const b174Raw = bracketDrafts.B174?.trim() ?? '';
   const b174Select = b174Raw && penaltiesOptions.includes(b174Raw) ? b174Raw : '';
 
-  const bronzeLeft = useMemo(
-    () =>
-      bronzeTeamFromFinalistHalf('G152', 'F148', 'F156', {
-        cellByAddress,
-        scoreDrafts,
-        standingTables,
-        bestThird: bestThirdPlaceRows,
-        bracketDrafts,
-      }),
-    [cellByAddress, scoreDrafts, standingTables, bestThirdPlaceRows, bracketDrafts],
-  );
-  const bronzeRight = useMemo(
-    () =>
-      bronzeTeamFromFinalistHalf('L152', 'N148', 'N156', {
-        cellByAddress,
-        scoreDrafts,
-        standingTables,
-        bestThird: bestThirdPlaceRows,
-        bracketDrafts,
-      }),
-    [cellByAddress, scoreDrafts, standingTables, bestThirdPlaceRows, bracketDrafts],
-  );
+  const bronzeLeft = useMemo(() => {
+    const b = fixtures.bracket;
+    const [sfA, sfB] = b.finalist_left_semis;
+    return bronzeTeamFromFinalistHalf(b.finalist_picks.left, sfA, sfB, ctx);
+  }, [ctx, fixtures.bracket]);
+
+  const bronzeRight = useMemo(() => {
+    const b = fixtures.bracket;
+    const [sfA, sfB] = b.finalist_right_semis;
+    return bronzeTeamFromFinalistHalf(b.finalist_picks.right, sfA, sfB, ctx);
+  }, [ctx, fixtures.bracket]);
 
   return (
     <section className="tipset-knockout" aria-label={t('knockout.sectionAria')}>

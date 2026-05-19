@@ -1,3 +1,28 @@
+# VM-tipset frontend
+
+## Data files (`public/`)
+
+| File | Role |
+|------|------|
+| `workbook_dump.json` | Mall layout: labels, merges, validations, formulas (presentation layer) |
+| `fixtures.json` | Tournament structure: group teams, fixtures, R32 slots, knockout bracket wiring |
+
+Regenerate both from the Excel mall:
+
+```bash
+python tools/parse_workbook.py "VM-tipset-2026-Mall version 1.3.xlsx" \
+  --json frontend/public/workbook_dump.json \
+  --fixtures frontend/public/fixtures.json
+```
+
+Or refresh fixtures only from an existing dump:
+
+```bash
+python tools/extract_fixtures.py frontend/public/workbook_dump.json -o frontend/public/fixtures.json
+```
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

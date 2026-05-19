@@ -22,6 +22,8 @@ Usage:
   pip install -r requirements.txt
   python tools/parse_workbook.py "VM-tipset-2026-Mall version 1.3.xlsx"
   python tools/parse_workbook.py workbook.xlsx --json output.json
+  python tools/parse_workbook.py workbook.xlsx --json frontend/public/workbook_dump.json \\
+    --fixtures frontend/public/fixtures.json
 """
 
 from __future__ import annotations
@@ -516,6 +518,12 @@ def main() -> int:
         help="Write full dump to FILE (UTF-8)",
     )
     parser.add_argument(
+        "--fixtures",
+        type=Path,
+        metavar="FILE",
+        help="Also write fixtures.json (tournament structure) to FILE",
+    )
+    parser.add_argument(
         "--data-only",
         action="store_true",
         help="Load cached values only (formulas become computed values or None if no cache)",
@@ -575,6 +583,20 @@ def main() -> int:
             encoding="utf-8",
         )
         print(f"wrote {args.json}")
+
+    if args.fixtures:
+        _tools_dir = Path(__file__).resolve().parent
+        if str(_tools_dir) not in sys.path:
+            sys.path.insert(0, str(_tools_dir))
+        from extract_fixtures import extract_fixtures_from_dump
+
+        fixtures = extract_fixtures_from_dump(data)
+        args.fixtures.parent.mkdir(parents=True, exist_ok=True)
+        args.fixtures.write_text(
+            json.dumps(fixtures, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print(f"wrote {args.fixtures}")
 
     if args.summary:
         for sh in data["sheets"]:

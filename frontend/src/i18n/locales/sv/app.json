@@ -2,8 +2,8 @@
   "meta": {
     "defaultSheetTitle": "VM-tipset"
   },
-  "loadError": "Kunde inte ladda workbook_dump.json: {{error}}",
-  "loadErrorHint": "Kör parse-skriptet med --json till tools/workbook_dump.json, kopiera till frontend/public/, och uppdatera sidan.",
+  "loadError": "Kunde inte ladda data: {{error}}",
+  "loadErrorHint": "Kör parse_workbook.py med --json och --fixtures till frontend/public/, och uppdatera sidan.",
   "loading": "Laddar arbetsbok…",
   "spreadsheet": {
     "subtitle": "Gula fält är måltips. Blå kolumner visar grupptabeller som uppdateras medan du fyller i."

@@ -2,8 +2,8 @@
   "meta": {
     "defaultSheetTitle": "VM-tipset"
   },
-  "loadError": "Failed to load workbook_dump.json: {{error}}",
-  "loadErrorHint": "Run the parse script with --json to tools/workbook_dump.json, copy it to frontend/public/, and refresh.",
+  "loadError": "Failed to load data: {{error}}",
+  "loadErrorHint": "Run parse_workbook.py with --json and --fixtures into frontend/public/, then refresh.",
   "loading": "Loading workbook…",
   "spreadsheet": {
     "subtitle": "Yellow cells are your score picks. Blue columns show group tables that update as you go."

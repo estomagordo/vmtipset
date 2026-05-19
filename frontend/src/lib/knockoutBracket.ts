@@ -1,7 +1,9 @@
 import type { WorkbookCell } from '../types/workbook';
 import type { StandingRow } from './groupStandings';
 import type { BestThirdPlaceRow } from './bestThirdPlace';
-import { R32_FIRST_MATCH_ROW, roundOf32TeamName } from './roundOf32';
+import type { FixturesModel } from './fixturesModel';
+import { r32MatchById } from './fixturesModel';
+import { roundOf32TeamName } from './roundOf32';
 import { matchPickFromRow } from './match1x2';
 
 export function normalizeBracketAddress(address: string): string {
@@ -9,77 +11,18 @@ export function normalizeBracketAddress(address: string): string {
 }
 
 /** Excel row for round-of-32 match M73 … M88 (VM-tipset mall). */
-export function excelRowForR32Match(matchId: string): number | null {
-  const n = /^M(\d+)$/.exec(matchId.trim().toUpperCase());
-  if (!n) return null;
-  const m = parseInt(n[1], 10);
-  if (m < 73 || m > 88) return null;
-  return R32_FIRST_MATCH_ROW + (m - 73);
+export function excelRowForR32Match(matchId: string, fixtures: FixturesModel): number | null {
+  return r32MatchById(fixtures, matchId)?.excel_row ?? null;
 }
 
-/**
- * R16 feeder pairings per 2026 FIFA bracket (see Wikipedia "Round of 16" table).
- * Column B lists M97–M98 path first (rows 145–151), then M99–M100 path (153–159).
- * Column R mirrors the other side of the draw for the symmetric mall layout.
- */
-export const R16_PAIR_BY_ADDRESS: Record<string, readonly [string, string]> = {
-  B145: ['M73', 'M75'],
-  B147: ['M74', 'M77'],
-  B149: ['M83', 'M84'],
-  B151: ['M81', 'M82'],
-  B153: ['M76', 'M78'],
-  B155: ['M79', 'M80'],
-  B157: ['M86', 'M88'],
-  B159: ['M85', 'M87'],
-  R145: ['M76', 'M78'],
-  R147: ['M79', 'M80'],
-  R149: ['M86', 'M88'],
-  R151: ['M85', 'M87'],
-  R153: ['M73', 'M75'],
-  R155: ['M74', 'M77'],
-  R157: ['M83', 'M84'],
-  R159: ['M81', 'M82'],
-};
-
 export type BracketResolveCtx = {
+  fixtures: FixturesModel;
   cellByAddress: Map<string, WorkbookCell>;
   scoreDrafts: Record<string, string>;
   standingTables: Map<string, StandingRow[] | null>;
   bestThird: BestThirdPlaceRow[] | null;
   bracketDrafts: Record<string, string>;
 };
-
-const QF_LEFT: Record<string, readonly [string, string]> = {
-  C146: ['B145', 'B147'],
-  C150: ['B149', 'B151'],
-  C154: ['B153', 'B155'],
-  C158: ['B157', 'B159'],
-};
-
-const QF_RIGHT: Record<string, readonly [string, string]> = {
-  P146: ['R145', 'R147'],
-  P150: ['R149', 'R151'],
-  P154: ['R153', 'R155'],
-  P158: ['R157', 'R159'],
-};
-
-const SF_LEFT: Record<string, readonly [string, string]> = {
-  F148: ['C146', 'C150'],
-  F156: ['C154', 'C158'],
-};
-
-const SF_RIGHT: Record<string, readonly [string, string]> = {
-  N148: ['P146', 'P150'],
-  N156: ['P154', 'P158'],
-};
-
-/** Semifinal winners that feed the left/right finalist pick (G152 / L152). */
-const FINALIST_LEFT_SEMIS: readonly [string, string] = ['F148', 'F156'];
-const FINALIST_RIGHT_SEMIS: readonly [string, string] = ['N148', 'N156'];
-
-const FINALIST_LEFT = 'G152';
-const FINALIST_RIGHT = 'L152';
-const CHAMPION = 'J152';
 
 function draftNorm(ctx: BracketResolveCtx, address: string): string {
   const n = normalizeBracketAddress(address);
@@ -90,8 +33,22 @@ function participantsFromR32(
   matchId: string,
   ctx: BracketResolveCtx,
 ): { home: string | null; away: string | null } {
-  const h = roundOf32TeamName(matchId, 'home', ctx.standingTables, ctx.cellByAddress, ctx.bestThird);
-  const a = roundOf32TeamName(matchId, 'away', ctx.standingTables, ctx.cellByAddress, ctx.bestThird);
+  const h = roundOf32TeamName(
+    matchId,
+    'home',
+    ctx.standingTables,
+    ctx.cellByAddress,
+    ctx.bestThird,
+    ctx.fixtures,
+  );
+  const a = roundOf32TeamName(
+    matchId,
+    'away',
+    ctx.standingTables,
+    ctx.cellByAddress,
+    ctx.bestThird,
+    ctx.fixtures,
+  );
   return { home: h, away: a };
 }
 
@@ -133,7 +90,7 @@ function r32WinnerFromStandingsWhenNoScorePick(
  * otherwise inferred from group-stage tables (VM-tipset mall uses "―" in column C for R32).
  */
 export function predictedR32Winner(matchId: string, ctx: BracketResolveCtx): string | null {
-  const row = excelRowForR32Match(matchId);
+  const row = excelRowForR32Match(matchId, ctx.fixtures);
   if (row === null) return null;
   const { home, away } = participantsFromR32(matchId, ctx);
 
@@ -151,7 +108,7 @@ export function predictedR32Winner(matchId: string, ctx: BracketResolveCtx): str
  */
 export function r16SelectOptions(address: string, ctx: BracketResolveCtx): string[] {
   const n = normalizeBracketAddress(address);
-  const pair = R16_PAIR_BY_ADDRESS[n];
+  const pair = ctx.fixtures.bracket.r16[n];
   if (!pair) return [];
   const [m1, m2] = pair;
   const w1 = predictedR32Winner(m1, ctx);
@@ -169,7 +126,7 @@ function qfSelectOptions(address: string, ctx: BracketResolveCtx, memo: Map<stri
   const n = normalizeBracketAddress(address);
   if (memo.has(n)) return memo.get(n)!;
 
-  const feeds = QF_LEFT[n] ?? QF_RIGHT[n];
+  const feeds = ctx.fixtures.bracket.qf[n];
   if (!feeds) {
     memo.set(n, []);
     return [];
@@ -193,7 +150,7 @@ function qfSelectOptions(address: string, ctx: BracketResolveCtx, memo: Map<stri
 
 function sfSelectOptions(address: string, ctx: BracketResolveCtx): string[] {
   const n = normalizeBracketAddress(address);
-  const sf = SF_LEFT[n] ?? SF_RIGHT[n];
+  const sf = ctx.fixtures.bracket.sf[n];
   if (!sf) return [];
   const out = new Set<string>();
   for (const f of sf) {
@@ -211,7 +168,8 @@ function sfSelectOptions(address: string, ctx: BracketResolveCtx): string[] {
 }
 
 function finalistOptions(side: 'left' | 'right', ctx: BracketResolveCtx): string[] {
-  const sf = side === 'left' ? FINALIST_LEFT_SEMIS : FINALIST_RIGHT_SEMIS;
+  const sf =
+    side === 'left' ? ctx.fixtures.bracket.finalist_left_semis : ctx.fixtures.bracket.finalist_right_semis;
   const out = new Set<string>();
   for (const f of sf) {
     const d = draftNorm(ctx, f);
@@ -227,8 +185,9 @@ function finalistOptions(side: 'left' | 'right', ctx: BracketResolveCtx): string
 }
 
 function championOptions(ctx: BracketResolveCtx): string[] {
-  const l = pickOrResolvedBracket(ctx, FINALIST_LEFT);
-  const r = pickOrResolvedBracket(ctx, FINALIST_RIGHT);
+  const { left, right } = ctx.fixtures.bracket.finalist_picks;
+  const l = pickOrResolvedBracket(ctx, left);
+  const r = pickOrResolvedBracket(ctx, right);
   if (!l || !r) {
     return [];
   }
@@ -245,22 +204,23 @@ function pickOrResolvedBracket(ctx: BracketResolveCtx, addr: string): string | n
 export function bracketSelectOptions(address: string, ctx: BracketResolveCtx): string[] {
   const n = normalizeBracketAddress(address);
 
-  if (R16_PAIR_BY_ADDRESS[n]) {
+  const b = ctx.fixtures.bracket;
+  if (b.r16[n]) {
     return r16SelectOptions(n, ctx);
   }
-  if (QF_LEFT[n] || QF_RIGHT[n]) {
+  if (b.qf[n]) {
     return qfSelectOptions(n, ctx, new Map());
   }
-  if (SF_LEFT[n] || SF_RIGHT[n]) {
+  if (b.sf[n]) {
     return sfSelectOptions(n, ctx);
   }
-  if (n === FINALIST_LEFT) {
+  if (n === b.finalist_picks.left) {
     return finalistOptions('left', ctx);
   }
-  if (n === FINALIST_RIGHT) {
+  if (n === b.finalist_picks.right) {
     return finalistOptions('right', ctx);
   }
-  if (n === CHAMPION) {
+  if (n === b.champion) {
     return championOptions(ctx);
   }
   return [];
@@ -296,13 +256,14 @@ export function bronzeTeamFromFinalistHalf(
   return null;
 }
 
-export const KNOCKOUT_BRACKET_PICK_ADDRESSES: readonly string[] = [
-  ...Object.keys(R16_PAIR_BY_ADDRESS),
-  ...Object.keys(QF_LEFT),
-  ...Object.keys(QF_RIGHT),
-  ...Object.keys(SF_LEFT),
-  ...Object.keys(SF_RIGHT),
-  FINALIST_LEFT,
-  FINALIST_RIGHT,
-  CHAMPION,
-];
+export function knockoutBracketPickAddresses(fixtures: FixturesModel): readonly string[] {
+  const b = fixtures.bracket;
+  return [
+    ...Object.keys(b.r16),
+    ...Object.keys(b.qf),
+    ...Object.keys(b.sf),
+    b.finalist_picks.left,
+    b.finalist_picks.right,
+    b.champion,
+  ];
+}

@@ -2,24 +2,33 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SpreadsheetView } from './components/SpreadsheetView';
 import { translateWorkbookString } from './i18n/workbookStrings';
+import { buildFixturesModel } from './lib/fixturesModel';
 import { buildGridFromDump } from './lib/gridModel';
+import type { FixturesDump } from './types/fixtures';
 import type { WorkbookDump } from './types/workbook';
 
 export default function App() {
   const { t, i18n } = useTranslation('app');
   const [dump, setDump] = useState<WorkbookDump | null>(null);
+  const [fixturesDump, setFixturesDump] = useState<FixturesDump | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let stillMounted = true;
-    fetch('/workbook_dump.json')
-      .then((r) => {
-        if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-        return r.json();
-      })
-      .then((data: WorkbookDump) => {
+    Promise.all([
+      fetch('/workbook_dump.json').then((r) => {
+        if (!r.ok) throw new Error(`workbook_dump.json: ${r.status} ${r.statusText}`);
+        return r.json() as Promise<WorkbookDump>;
+      }),
+      fetch('/fixtures.json').then((r) => {
+        if (!r.ok) throw new Error(`fixtures.json: ${r.status} ${r.statusText}`);
+        return r.json() as Promise<FixturesDump>;
+      }),
+    ])
+      .then(([workbook, fixtures]) => {
         if (!stillMounted) return;
-        setDump(data);
+        setDump(workbook);
+        setFixturesDump(fixtures);
       })
       .catch((e: unknown) => {
         if (!stillMounted) return;
@@ -31,6 +40,10 @@ export default function App() {
   }, []);
 
   const gridModel = useMemo(() => (dump ? buildGridFromDump(dump) : null), [dump]);
+  const fixtures = useMemo(
+    () => (fixturesDump ? buildFixturesModel(fixturesDump) : null),
+    [fixturesDump],
+  );
 
   if (error) {
     return (
@@ -41,7 +54,7 @@ export default function App() {
     );
   }
 
-  if (!gridModel || !dump) {
+  if (!gridModel || !dump || !fixtures) {
     return (
       <div className="tipset-app">
         <p className="tipset-loading">{t('loading')}</p>
@@ -60,6 +73,7 @@ export default function App() {
         rowCount={gridModel.rowCount}
         colCount={gridModel.colCount}
         cellByAddress={gridModel.cellByAddress}
+        fixtures={fixtures}
       />
     </div>
   );

@@ -1,0 +1,1288 @@
+{
+  "version": 1,
+  "source_workbook": "VM-tipset-2026-Mall version 1.3.xlsx",
+  "layout": {
+    "group_stage": {
+      "first_fixture_row": 14,
+      "row_stride": 8,
+      "fixture_rows_per_group": 6,
+      "standing_rows_per_group": 4,
+      "letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L"
+      ]
+    },
+    "round_of_32": {
+      "header_row": 109,
+      "first_match_row": 110,
+      "last_match_row": 125
+    }
+  },
+  "groups": [
+    {
+      "id": "Grupp A",
+      "letter": "A",
+      "header_row": 13,
+      "start_row": 14,
+      "teams": [
+        "Mexiko",
+        "Sydafrika",
+        "Sydkorea",
+        "Tjeckien"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M1",
+          "excel_row": 14,
+          "home_team": "Mexiko",
+          "away_team": "Sydafrika",
+          "score_cells": {
+            "home": "C14",
+            "away": "E14"
+          }
+        },
+        {
+          "match_id": "M2",
+          "excel_row": 15,
+          "home_team": "Sydkorea",
+          "away_team": "Tjeckien",
+          "score_cells": {
+            "home": "C15",
+            "away": "E15"
+          }
+        },
+        {
+          "match_id": "M3",
+          "excel_row": 16,
+          "home_team": "Mexiko",
+          "away_team": "Sydkorea",
+          "score_cells": {
+            "home": "C16",
+            "away": "E16"
+          }
+        },
+        {
+          "match_id": "M4",
+          "excel_row": 17,
+          "home_team": "Sydafrika",
+          "away_team": "Tjeckien",
+          "score_cells": {
+            "home": "C17",
+            "away": "E17"
+          }
+        },
+        {
+          "match_id": "M5",
+          "excel_row": 18,
+          "home_team": "Mexiko",
+          "away_team": "Tjeckien",
+          "score_cells": {
+            "home": "C18",
+            "away": "E18"
+          }
+        },
+        {
+          "match_id": "M6",
+          "excel_row": 19,
+          "home_team": "Sydafrika",
+          "away_team": "Sydkorea",
+          "score_cells": {
+            "home": "C19",
+            "away": "E19"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp B",
+      "letter": "B",
+      "header_row": 21,
+      "start_row": 22,
+      "teams": [
+        "Kanada",
+        "Bosnien",
+        "Qatar",
+        "Schweiz"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M7",
+          "excel_row": 22,
+          "home_team": "Kanada",
+          "away_team": "Bosnien",
+          "score_cells": {
+            "home": "C22",
+            "away": "E22"
+          }
+        },
+        {
+          "match_id": "M8",
+          "excel_row": 23,
+          "home_team": "Qatar",
+          "away_team": "Schweiz",
+          "score_cells": {
+            "home": "C23",
+            "away": "E23"
+          }
+        },
+        {
+          "match_id": "M9",
+          "excel_row": 24,
+          "home_team": "Kanada",
+          "away_team": "Qatar",
+          "score_cells": {
+            "home": "C24",
+            "away": "E24"
+          }
+        },
+        {
+          "match_id": "M10",
+          "excel_row": 25,
+          "home_team": "Bosnien",
+          "away_team": "Schweiz",
+          "score_cells": {
+            "home": "C25",
+            "away": "E25"
+          }
+        },
+        {
+          "match_id": "M11",
+          "excel_row": 26,
+          "home_team": "Kanada",
+          "away_team": "Schweiz",
+          "score_cells": {
+            "home": "C26",
+            "away": "E26"
+          }
+        },
+        {
+          "match_id": "M12",
+          "excel_row": 27,
+          "home_team": "Bosnien",
+          "away_team": "Qatar",
+          "score_cells": {
+            "home": "C27",
+            "away": "E27"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp C",
+      "letter": "C",
+      "header_row": 29,
+      "start_row": 30,
+      "teams": [
+        "Brasilien",
+        "Marocko",
+        "Haiti",
+        "Skottland"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M13",
+          "excel_row": 30,
+          "home_team": "Brasilien",
+          "away_team": "Marocko",
+          "score_cells": {
+            "home": "C30",
+            "away": "E30"
+          }
+        },
+        {
+          "match_id": "M14",
+          "excel_row": 31,
+          "home_team": "Haiti",
+          "away_team": "Skottland",
+          "score_cells": {
+            "home": "C31",
+            "away": "E31"
+          }
+        },
+        {
+          "match_id": "M15",
+          "excel_row": 32,
+          "home_team": "Brasilien",
+          "away_team": "Haiti",
+          "score_cells": {
+            "home": "C32",
+            "away": "E32"
+          }
+        },
+        {
+          "match_id": "M16",
+          "excel_row": 33,
+          "home_team": "Marocko",
+          "away_team": "Skottland",
+          "score_cells": {
+            "home": "C33",
+            "away": "E33"
+          }
+        },
+        {
+          "match_id": "M17",
+          "excel_row": 34,
+          "home_team": "Brasilien",
+          "away_team": "Skottland",
+          "score_cells": {
+            "home": "C34",
+            "away": "E34"
+          }
+        },
+        {
+          "match_id": "M18",
+          "excel_row": 35,
+          "home_team": "Marocko",
+          "away_team": "Haiti",
+          "score_cells": {
+            "home": "C35",
+            "away": "E35"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp D",
+      "letter": "D",
+      "header_row": 37,
+      "start_row": 38,
+      "teams": [
+        "USA",
+        "Paraguay",
+        "Australien",
+        "Turkiet"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M19",
+          "excel_row": 38,
+          "home_team": "USA",
+          "away_team": "Paraguay",
+          "score_cells": {
+            "home": "C38",
+            "away": "E38"
+          }
+        },
+        {
+          "match_id": "M20",
+          "excel_row": 39,
+          "home_team": "Australien",
+          "away_team": "Turkiet",
+          "score_cells": {
+            "home": "C39",
+            "away": "E39"
+          }
+        },
+        {
+          "match_id": "M21",
+          "excel_row": 40,
+          "home_team": "USA",
+          "away_team": "Australien",
+          "score_cells": {
+            "home": "C40",
+            "away": "E40"
+          }
+        },
+        {
+          "match_id": "M22",
+          "excel_row": 41,
+          "home_team": "Paraguay",
+          "away_team": "Turkiet",
+          "score_cells": {
+            "home": "C41",
+            "away": "E41"
+          }
+        },
+        {
+          "match_id": "M23",
+          "excel_row": 42,
+          "home_team": "Australien",
+          "away_team": "USA",
+          "score_cells": {
+            "home": "C42",
+            "away": "E42"
+          }
+        },
+        {
+          "match_id": "M24",
+          "excel_row": 43,
+          "home_team": "Paraguay",
+          "away_team": "Australien",
+          "score_cells": {
+            "home": "C43",
+            "away": "E43"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp E",
+      "letter": "E",
+      "header_row": 45,
+      "start_row": 46,
+      "teams": [
+        "Tyskland",
+        "Curaçao",
+        "Elfenbenskusten",
+        "Ecuador"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M25",
+          "excel_row": 46,
+          "home_team": "Tyskland",
+          "away_team": "Curaçao",
+          "score_cells": {
+            "home": "C46",
+            "away": "E46"
+          }
+        },
+        {
+          "match_id": "M26",
+          "excel_row": 47,
+          "home_team": "Elfenbenskusten",
+          "away_team": "Ecuador",
+          "score_cells": {
+            "home": "C47",
+            "away": "E47"
+          }
+        },
+        {
+          "match_id": "M27",
+          "excel_row": 48,
+          "home_team": "Tyskland",
+          "away_team": "Elfenbenskusten",
+          "score_cells": {
+            "home": "C48",
+            "away": "E48"
+          }
+        },
+        {
+          "match_id": "M28",
+          "excel_row": 49,
+          "home_team": "Curaçao",
+          "away_team": "Ecuador",
+          "score_cells": {
+            "home": "C49",
+            "away": "E49"
+          }
+        },
+        {
+          "match_id": "M29",
+          "excel_row": 50,
+          "home_team": "Tyskland",
+          "away_team": "Ecuador",
+          "score_cells": {
+            "home": "C50",
+            "away": "E50"
+          }
+        },
+        {
+          "match_id": "M30",
+          "excel_row": 51,
+          "home_team": "Curaçao",
+          "away_team": "Elfenbenskusten",
+          "score_cells": {
+            "home": "C51",
+            "away": "E51"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp F",
+      "letter": "F",
+      "header_row": 53,
+      "start_row": 54,
+      "teams": [
+        "Nederländerna",
+        "Japan",
+        "Sverige",
+        "Tunisien"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M31",
+          "excel_row": 54,
+          "home_team": "Nederländerna",
+          "away_team": "Japan",
+          "score_cells": {
+            "home": "C54",
+            "away": "E54"
+          }
+        },
+        {
+          "match_id": "M32",
+          "excel_row": 55,
+          "home_team": "Sverige",
+          "away_team": "Tunisien",
+          "score_cells": {
+            "home": "C55",
+            "away": "E55"
+          }
+        },
+        {
+          "match_id": "M33",
+          "excel_row": 56,
+          "home_team": "Nederländerna",
+          "away_team": "Sverige",
+          "score_cells": {
+            "home": "C56",
+            "away": "E56"
+          }
+        },
+        {
+          "match_id": "M34",
+          "excel_row": 57,
+          "home_team": "Japan",
+          "away_team": "Tunisien",
+          "score_cells": {
+            "home": "C57",
+            "away": "E57"
+          }
+        },
+        {
+          "match_id": "M35",
+          "excel_row": 58,
+          "home_team": "Nederländerna",
+          "away_team": "Tunisien",
+          "score_cells": {
+            "home": "C58",
+            "away": "E58"
+          }
+        },
+        {
+          "match_id": "M36",
+          "excel_row": 59,
+          "home_team": "Japan",
+          "away_team": "Sverige",
+          "score_cells": {
+            "home": "C59",
+            "away": "E59"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp G",
+      "letter": "G",
+      "header_row": 61,
+      "start_row": 62,
+      "teams": [
+        "Belgien",
+        "Egypten",
+        "Iran",
+        "Nya Zeeland"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M37",
+          "excel_row": 62,
+          "home_team": "Belgien",
+          "away_team": "Egypten",
+          "score_cells": {
+            "home": "C62",
+            "away": "E62"
+          }
+        },
+        {
+          "match_id": "M38",
+          "excel_row": 63,
+          "home_team": "Iran",
+          "away_team": "Nya Zeeland",
+          "score_cells": {
+            "home": "C63",
+            "away": "E63"
+          }
+        },
+        {
+          "match_id": "M39",
+          "excel_row": 64,
+          "home_team": "Belgien",
+          "away_team": "Iran",
+          "score_cells": {
+            "home": "C64",
+            "away": "E64"
+          }
+        },
+        {
+          "match_id": "M40",
+          "excel_row": 65,
+          "home_team": "Egypten",
+          "away_team": "Nya Zeeland",
+          "score_cells": {
+            "home": "C65",
+            "away": "E65"
+          }
+        },
+        {
+          "match_id": "M41",
+          "excel_row": 66,
+          "home_team": "Belgien",
+          "away_team": "Nya Zeeland",
+          "score_cells": {
+            "home": "C66",
+            "away": "E66"
+          }
+        },
+        {
+          "match_id": "M42",
+          "excel_row": 67,
+          "home_team": "Egypten",
+          "away_team": "Iran",
+          "score_cells": {
+            "home": "C67",
+            "away": "E67"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp H",
+      "letter": "H",
+      "header_row": 69,
+      "start_row": 70,
+      "teams": [
+        "Spanien",
+        "Kap Verde",
+        "Saudiarabien",
+        "Uruguay"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M43",
+          "excel_row": 70,
+          "home_team": "Spanien",
+          "away_team": "Kap Verde",
+          "score_cells": {
+            "home": "C70",
+            "away": "E70"
+          }
+        },
+        {
+          "match_id": "M44",
+          "excel_row": 71,
+          "home_team": "Saudiarabien",
+          "away_team": "Uruguay",
+          "score_cells": {
+            "home": "C71",
+            "away": "E71"
+          }
+        },
+        {
+          "match_id": "M45",
+          "excel_row": 72,
+          "home_team": "Spanien",
+          "away_team": "Saudiarabien",
+          "score_cells": {
+            "home": "C72",
+            "away": "E72"
+          }
+        },
+        {
+          "match_id": "M46",
+          "excel_row": 73,
+          "home_team": "Kap Verde",
+          "away_team": "Uruguay",
+          "score_cells": {
+            "home": "C73",
+            "away": "E73"
+          }
+        },
+        {
+          "match_id": "M47",
+          "excel_row": 74,
+          "home_team": "Spanien",
+          "away_team": "Uruguay",
+          "score_cells": {
+            "home": "C74",
+            "away": "E74"
+          }
+        },
+        {
+          "match_id": "M48",
+          "excel_row": 75,
+          "home_team": "Kap Verde",
+          "away_team": "Saudiarabien",
+          "score_cells": {
+            "home": "C75",
+            "away": "E75"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp I",
+      "letter": "I",
+      "header_row": 77,
+      "start_row": 78,
+      "teams": [
+        "Frankrike",
+        "Senegal",
+        "Irak",
+        "Norge"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M49",
+          "excel_row": 78,
+          "home_team": "Frankrike",
+          "away_team": "Senegal",
+          "score_cells": {
+            "home": "C78",
+            "away": "E78"
+          }
+        },
+        {
+          "match_id": "M50",
+          "excel_row": 79,
+          "home_team": "Irak",
+          "away_team": "Norge",
+          "score_cells": {
+            "home": "C79",
+            "away": "E79"
+          }
+        },
+        {
+          "match_id": "M51",
+          "excel_row": 80,
+          "home_team": "Frankrike",
+          "away_team": "Irak",
+          "score_cells": {
+            "home": "C80",
+            "away": "E80"
+          }
+        },
+        {
+          "match_id": "M52",
+          "excel_row": 81,
+          "home_team": "Senegal",
+          "away_team": "Norge",
+          "score_cells": {
+            "home": "C81",
+            "away": "E81"
+          }
+        },
+        {
+          "match_id": "M53",
+          "excel_row": 82,
+          "home_team": "Frankrike",
+          "away_team": "Norge",
+          "score_cells": {
+            "home": "C82",
+            "away": "E82"
+          }
+        },
+        {
+          "match_id": "M54",
+          "excel_row": 83,
+          "home_team": "Senegal",
+          "away_team": "Irak",
+          "score_cells": {
+            "home": "C83",
+            "away": "E83"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp J",
+      "letter": "J",
+      "header_row": 85,
+      "start_row": 86,
+      "teams": [
+        "Argentina",
+        "Algeriet",
+        "Österrike",
+        "Jordanien"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M55",
+          "excel_row": 86,
+          "home_team": "Argentina",
+          "away_team": "Algeriet",
+          "score_cells": {
+            "home": "C86",
+            "away": "E86"
+          }
+        },
+        {
+          "match_id": "M56",
+          "excel_row": 87,
+          "home_team": "Österrike",
+          "away_team": "Jordanien",
+          "score_cells": {
+            "home": "C87",
+            "away": "E87"
+          }
+        },
+        {
+          "match_id": "M57",
+          "excel_row": 88,
+          "home_team": "Argentina",
+          "away_team": "Österrike",
+          "score_cells": {
+            "home": "C88",
+            "away": "E88"
+          }
+        },
+        {
+          "match_id": "M58",
+          "excel_row": 89,
+          "home_team": "Algeriet",
+          "away_team": "Jordanien",
+          "score_cells": {
+            "home": "C89",
+            "away": "E89"
+          }
+        },
+        {
+          "match_id": "M59",
+          "excel_row": 90,
+          "home_team": "Argentina",
+          "away_team": "Jordanien",
+          "score_cells": {
+            "home": "C90",
+            "away": "E90"
+          }
+        },
+        {
+          "match_id": "M60",
+          "excel_row": 91,
+          "home_team": "Algeriet",
+          "away_team": "Österrike",
+          "score_cells": {
+            "home": "C91",
+            "away": "E91"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp K",
+      "letter": "K",
+      "header_row": 93,
+      "start_row": 94,
+      "teams": [
+        "Portugal",
+        "DR Kongo",
+        "Uzbekistan",
+        "Colombia"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M61",
+          "excel_row": 94,
+          "home_team": "Portugal",
+          "away_team": "DR Kongo",
+          "score_cells": {
+            "home": "C94",
+            "away": "E94"
+          }
+        },
+        {
+          "match_id": "M62",
+          "excel_row": 95,
+          "home_team": "Uzbekistan",
+          "away_team": "Colombia",
+          "score_cells": {
+            "home": "C95",
+            "away": "E95"
+          }
+        },
+        {
+          "match_id": "M63",
+          "excel_row": 96,
+          "home_team": "Portugal",
+          "away_team": "Uzbekistan",
+          "score_cells": {
+            "home": "C96",
+            "away": "E96"
+          }
+        },
+        {
+          "match_id": "M64",
+          "excel_row": 97,
+          "home_team": "DR Kongo",
+          "away_team": "Colombia",
+          "score_cells": {
+            "home": "C97",
+            "away": "E97"
+          }
+        },
+        {
+          "match_id": "M65",
+          "excel_row": 98,
+          "home_team": "Portugal",
+          "away_team": "Colombia",
+          "score_cells": {
+            "home": "C98",
+            "away": "E98"
+          }
+        },
+        {
+          "match_id": "M66",
+          "excel_row": 99,
+          "home_team": "DR Kongo",
+          "away_team": "Uzbekistan",
+          "score_cells": {
+            "home": "C99",
+            "away": "E99"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Grupp L",
+      "letter": "L",
+      "header_row": 101,
+      "start_row": 102,
+      "teams": [
+        "England",
+        "Kroatien",
+        "Ghana",
+        "Panama"
+      ],
+      "fixtures": [
+        {
+          "match_id": "M67",
+          "excel_row": 102,
+          "home_team": "England",
+          "away_team": "Kroatien",
+          "score_cells": {
+            "home": "C102",
+            "away": "E102"
+          }
+        },
+        {
+          "match_id": "M68",
+          "excel_row": 103,
+          "home_team": "Ghana",
+          "away_team": "Panama",
+          "score_cells": {
+            "home": "C103",
+            "away": "E103"
+          }
+        },
+        {
+          "match_id": "M69",
+          "excel_row": 104,
+          "home_team": "England",
+          "away_team": "Ghana",
+          "score_cells": {
+            "home": "C104",
+            "away": "E104"
+          }
+        },
+        {
+          "match_id": "M70",
+          "excel_row": 105,
+          "home_team": "Kroatien",
+          "away_team": "Panama",
+          "score_cells": {
+            "home": "C105",
+            "away": "E105"
+          }
+        },
+        {
+          "match_id": "M71",
+          "excel_row": 106,
+          "home_team": "England",
+          "away_team": "Panama",
+          "score_cells": {
+            "home": "C106",
+            "away": "E106"
+          }
+        },
+        {
+          "match_id": "M72",
+          "excel_row": 107,
+          "home_team": "Kroatien",
+          "away_team": "Ghana",
+          "score_cells": {
+            "home": "C107",
+            "away": "E107"
+          }
+        }
+      ]
+    }
+  ],
+  "round_of_32": [
+    {
+      "match_id": "M73",
+      "excel_row": 110,
+      "slot_hint": "2A vs 2B",
+      "home": {
+        "type": "group_rank",
+        "group": "A",
+        "rank": 2
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "B",
+        "rank": 2
+      }
+    },
+    {
+      "match_id": "M74",
+      "excel_row": 111,
+      "slot_hint": "1E vs 3A/3B/3C/3D/3F",
+      "home": {
+        "type": "group_rank",
+        "group": "E",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 3
+      }
+    },
+    {
+      "match_id": "M75",
+      "excel_row": 112,
+      "slot_hint": "1F vs 2C",
+      "home": {
+        "type": "group_rank",
+        "group": "F",
+        "rank": 1
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "C",
+        "rank": 2
+      }
+    },
+    {
+      "match_id": "M76",
+      "excel_row": 113,
+      "slot_hint": "1C vs 2F",
+      "home": {
+        "type": "group_rank",
+        "group": "C",
+        "rank": 1
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "F",
+        "rank": 2
+      }
+    },
+    {
+      "match_id": "M77",
+      "excel_row": 114,
+      "slot_hint": "1I vs 3C/3D/3F/3G/3H",
+      "home": {
+        "type": "group_rank",
+        "group": "I",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 5
+      }
+    },
+    {
+      "match_id": "M78",
+      "excel_row": 115,
+      "slot_hint": "2E vs 2I",
+      "home": {
+        "type": "group_rank",
+        "group": "E",
+        "rank": 2
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "I",
+        "rank": 2
+      }
+    },
+    {
+      "match_id": "M79",
+      "excel_row": 116,
+      "slot_hint": "1A vs 3C/3E/3F/3H/3I",
+      "home": {
+        "type": "group_rank",
+        "group": "A",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 0
+      }
+    },
+    {
+      "match_id": "M80",
+      "excel_row": 117,
+      "slot_hint": "1L vs 3E/3H/3I/3J/3K",
+      "home": {
+        "type": "group_rank",
+        "group": "L",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 7
+      }
+    },
+    {
+      "match_id": "M81",
+      "excel_row": 118,
+      "slot_hint": "1D vs 3B/3E/3F/3I/3J",
+      "home": {
+        "type": "group_rank",
+        "group": "D",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 2
+      }
+    },
+    {
+      "match_id": "M82",
+      "excel_row": 119,
+      "slot_hint": "1G vs 3A/3E/3H/3I/3J",
+      "home": {
+        "type": "group_rank",
+        "group": "G",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 4
+      }
+    },
+    {
+      "match_id": "M83",
+      "excel_row": 120,
+      "slot_hint": "2K vs 2L",
+      "home": {
+        "type": "group_rank",
+        "group": "K",
+        "rank": 2
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "L",
+        "rank": 2
+      }
+    },
+    {
+      "match_id": "M84",
+      "excel_row": 121,
+      "slot_hint": "1H vs 2J",
+      "home": {
+        "type": "group_rank",
+        "group": "H",
+        "rank": 1
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "J",
+        "rank": 2
+      }
+    },
+    {
+      "match_id": "M85",
+      "excel_row": 122,
+      "slot_hint": "1B vs 3E/3F/3G/3I/3J",
+      "home": {
+        "type": "group_rank",
+        "group": "B",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 1
+      }
+    },
+    {
+      "match_id": "M86",
+      "excel_row": 123,
+      "slot_hint": "1J vs 2H",
+      "home": {
+        "type": "group_rank",
+        "group": "J",
+        "rank": 1
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "H",
+        "rank": 2
+      }
+    },
+    {
+      "match_id": "M87",
+      "excel_row": 124,
+      "slot_hint": "1K vs 3D/3E/3I/3J/3L",
+      "home": {
+        "type": "group_rank",
+        "group": "K",
+        "rank": 1
+      },
+      "away": {
+        "type": "best_third",
+        "annex_index": 6
+      }
+    },
+    {
+      "match_id": "M88",
+      "excel_row": 125,
+      "slot_hint": "2D vs 2G",
+      "home": {
+        "type": "group_rank",
+        "group": "D",
+        "rank": 2
+      },
+      "away": {
+        "type": "group_rank",
+        "group": "G",
+        "rank": 2
+      }
+    }
+  ],
+  "knockout_bracket": {
+    "r16": {
+      "B145": [
+        "M73",
+        "M75"
+      ],
+      "B147": [
+        "M74",
+        "M77"
+      ],
+      "B149": [
+        "M83",
+        "M84"
+      ],
+      "B151": [
+        "M81",
+        "M82"
+      ],
+      "B153": [
+        "M76",
+        "M78"
+      ],
+      "B155": [
+        "M79",
+        "M80"
+      ],
+      "B157": [
+        "M86",
+        "M88"
+      ],
+      "B159": [
+        "M85",
+        "M87"
+      ],
+      "R145": [
+        "M76",
+        "M78"
+      ],
+      "R147": [
+        "M79",
+        "M80"
+      ],
+      "R149": [
+        "M86",
+        "M88"
+      ],
+      "R151": [
+        "M85",
+        "M87"
+      ],
+      "R153": [
+        "M73",
+        "M75"
+      ],
+      "R155": [
+        "M74",
+        "M77"
+      ],
+      "R157": [
+        "M83",
+        "M84"
+      ],
+      "R159": [
+        "M81",
+        "M82"
+      ]
+    },
+    "qf": {
+      "C146": [
+        "B145",
+        "B147"
+      ],
+      "C150": [
+        "B149",
+        "B151"
+      ],
+      "C154": [
+        "B153",
+        "B155"
+      ],
+      "C158": [
+        "B157",
+        "B159"
+      ],
+      "P146": [
+        "R145",
+        "R147"
+      ],
+      "P150": [
+        "R149",
+        "R151"
+      ],
+      "P154": [
+        "R153",
+        "R155"
+      ],
+      "P158": [
+        "R157",
+        "R159"
+      ]
+    },
+    "sf": {
+      "F148": [
+        "C146",
+        "C150"
+      ],
+      "F156": [
+        "C154",
+        "C158"
+      ],
+      "N148": [
+        "P146",
+        "P150"
+      ],
+      "N156": [
+        "P154",
+        "P158"
+      ]
+    },
+    "finalist_left_semis": [
+      "F148",
+      "F156"
+    ],
+    "finalist_right_semis": [
+      "N148",
+      "N156"
+    ],
+    "finalist_picks": {
+      "left": "G152",
+      "right": "L152"
+    },
+    "champion": "J152"
+  }
+}

@@ -36,6 +36,8 @@ import { lettersToColIndex } from '../lib/excelAddress';
 import { tryRoundOf32TeamDisplay, R32_FIRST_MATCH_ROW, R32_LAST_MATCH_ROW, R32_HEADER_ROW, R32_FIRST_GRID_ROW_INDEX, R32_GRID_SLICE_END_EXCLUSIVE } from '../lib/roundOf32';
 import { KnockoutBracketView } from './KnockoutBracketView';
 import { normalizeBracketAddress } from '../lib/knockoutBracket';
+import type { FixturesModel } from '../lib/fixturesModel';
+import { r32MatchForExcelRow } from '../lib/fixturesModel';
 
 export type SpreadsheetViewProps = {
   title: string;
@@ -43,6 +45,7 @@ export type SpreadsheetViewProps = {
   rowCount: number;
   colCount: number;
   cellByAddress: Map<string, WorkbookCell>;
+  fixtures: FixturesModel;
 };
 
 type GroupRowCtx = { blockHeaderExcelRow: number; rowInBlock: number };
@@ -75,6 +78,7 @@ type CellBodyProps = {
   onScoreDraft: (address: string, value: string) => void;
   standingTables: Map<string, StandingRow[] | null>;
   bestThirdPlaceRows: BestThirdPlaceRow[] | null;
+  fixtures: FixturesModel;
 };
 
 function CellBody({
@@ -90,6 +94,7 @@ function CellBody({
   onScoreDraft,
   standingTables,
   bestThirdPlaceRows,
+  fixtures,
 }: CellBodyProps) {
   const { t, i18n } = useTranslation('app');
   const key = normalizeCellAddress(address);
@@ -100,6 +105,7 @@ function CellBody({
     standingTables,
     cellByAddress,
     bestThirdPlaceRows,
+    fixtures,
   );
   if (r32Display !== undefined) {
     if (r32Display === '') {
@@ -281,6 +287,7 @@ type SheetRowProps = {
   onScoreDraft: (address: string, value: string) => void;
   standingTables: Map<string, StandingRow[] | null>;
   bestThirdPlaceRows: BestThirdPlaceRow[] | null;
+  fixtures: FixturesModel;
 };
 
 function SheetRow({
@@ -296,6 +303,7 @@ function SheetRow({
   onScoreDraft,
   standingTables,
   bestThirdPlaceRows,
+  fixtures,
 }: SheetRowProps) {
   const excelRow = rowIndex0 + 1;
   const isMetaBlockRow = excelRow < 10;
@@ -446,6 +454,7 @@ function SheetRow({
             onScoreDraft={onScoreDraft}
             standingTables={standingTables}
             bestThirdPlaceRows={bestThirdPlaceRows}
+            fixtures={fixtures}
           />
         );
 
@@ -479,7 +488,14 @@ function SheetRow({
   );
 }
 
-export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress }: SpreadsheetViewProps) {
+export function SpreadsheetView({
+  title,
+  grid,
+  rowCount,
+  colCount,
+  cellByAddress,
+  fixtures,
+}: SpreadsheetViewProps) {
   const { t, i18n } = useTranslation('app');
   const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
   const [metaDrafts, setMetaDrafts] = useState<Record<string, string>>({});
@@ -499,8 +515,8 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
   }, []);
 
   const standingTables = useMemo(
-    () => computeGroupStandings(cellByAddress, scoreDrafts),
-    [cellByAddress, scoreDrafts],
+    () => computeGroupStandings(cellByAddress, scoreDrafts, fixtures),
+    [cellByAddress, scoreDrafts, fixtures],
   );
 
   const bestThirdPlaceRows = useMemo(
@@ -526,13 +542,12 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
 
   const r32MatchHintForExcelRow = useCallback(
     (excelRow: number): string | null => {
-      if (excelRow < R32_FIRST_MATCH_ROW || excelRow > R32_LAST_MATCH_ROW) return null;
-      const entry = cellByAddress.get(`P${excelRow}`);
-      const raw = entry?.value != null && entry.value !== '' ? String(entry.value).trim() : '';
+      const m = r32MatchForExcelRow(fixtures, excelRow);
+      const raw = m?.slot_hint?.trim();
       if (!raw) return null;
       return translateWorkbookString(raw, i18n);
     },
-    [cellByAddress, i18n],
+    [fixtures, i18n],
   );
 
   const sharedRowProps = {
@@ -543,6 +558,7 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
     onScoreDraft,
     standingTables,
     bestThirdPlaceRows,
+    fixtures,
   };
 
   return (
@@ -712,6 +728,7 @@ export function SpreadsheetView({ title, grid, rowCount, colCount, cellByAddress
             )}
 
             <KnockoutBracketView
+              fixtures={fixtures}
               cellByAddress={cellByAddress}
               scoreDrafts={scoreDrafts}
               standingTables={standingTables}

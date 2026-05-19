@@ -1,10 +1,11 @@
 import {
   GROUP_STAGE_BLOCKS,
-  GROUP_STAGE_FIXTURE_ROWS,
   GROUP_STAGE_STANDING_ROWS,
   type GroupStageBlock,
 } from '../config/groupStageBlocks';
+import type { GroupBlock } from '../types/fixtures';
 import type { WorkbookCell } from '../types/workbook';
+import type { FixturesModel } from './fixturesModel';
 import { lettersToColIndex, parseA1 } from './excelAddress';
 import { getScoreSelectValue } from './scoreCells';
 
@@ -53,17 +54,6 @@ function blockAndRankForStandingsCell(
     if (row >= r0 && row < r0 + GROUP_STAGE_STANDING_ROWS) {
       return { block, rank: row - r0, statKey };
     }
-  }
-  return null;
-}
-
-function teamNameFromFixtureCell(entry: WorkbookCell | undefined): string | null {
-  if (!entry) return null;
-  if (entry.kind === 'formula' && entry.cached_value != null && entry.cached_value !== '') {
-    return String(entry.cached_value).trim();
-  }
-  if (entry.value != null && entry.value !== '') {
-    return String(entry.value).trim();
   }
   return null;
 }
@@ -150,30 +140,33 @@ export function compareStandings(a: StandingRow, b: StandingRow): number {
 export function computeGroupStandings(
   cellByAddress: Map<string, WorkbookCell>,
   scoreDrafts: Record<string, string>,
+  fixtures: FixturesModel,
   blocks: readonly GroupStageBlock[] = GROUP_STAGE_BLOCKS,
 ): Map<string, StandingRow[] | null> {
   const out = new Map<string, StandingRow[] | null>();
 
-  for (const { id: groupId, startRow } of blocks) {
-    const fixtureRows: number[] = [];
-    for (let i = 0; i < GROUP_STAGE_FIXTURE_ROWS; i++) {
-      fixtureRows.push(startRow + i);
+  for (const { id: groupId } of blocks) {
+    const groupBlock: GroupBlock | undefined = fixtures.groupsById.get(groupId);
+    if (!groupBlock) {
+      out.set(groupId, null);
+      continue;
     }
 
     const teams = new Set<string>();
     const pairings: { home: string; away: string; cAddr: string; eAddr: string }[] = [];
 
-    for (const r of fixtureRows) {
-      const cAddr = `C${r}`;
-      const eAddr = `E${r}`;
-      const b = cellByAddress.get(`B${r}`);
-      const f = cellByAddress.get(`F${r}`);
-      const home = teamNameFromFixtureCell(b);
-      const away = teamNameFromFixtureCell(f);
+    for (const fx of groupBlock.fixtures) {
+      const home = fx.home_team?.trim();
+      const away = fx.away_team?.trim();
       if (!home || !away) continue;
       teams.add(home);
       teams.add(away);
-      pairings.push({ home, away, cAddr, eAddr });
+      pairings.push({
+        home,
+        away,
+        cAddr: fx.score_cells.home,
+        eAddr: fx.score_cells.away,
+      });
     }
 
     let finishedFixtures = 0;
